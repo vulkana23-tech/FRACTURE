@@ -43,3 +43,15 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `findings/2026-08-09_fabric-amcl-dilithium-panic.md` — candidato
   real, todavía sin confirmar reachability end-to-end antes de
   reportarlo.
+- `triage/classify_go_panic.py`: cuarta y última pieza de la
+  arquitectura original implementada. Extrae mensaje + stack real
+  (filtra plomería interna de Go) de un panic, dedup por hash, clasifica
+  severidad por tipo. Validado contra el fixture REAL del hallazgo de
+  `DL_verify_2` (no sintético) — bug real encontrado y arreglado en el
+  camino: la regex de frames no incluía `-` en la clase de caracteres,
+  no matcheaba `fabric-amcl` (tiene guión), el frame de origen quedaba
+  vacío. 5/5 tests contra el fixture real.
+
+### Estado: las 4 piezas de la arquitectura original están implementadas
+y validadas en vivo, con un hallazgo real (sin confirmar todavía como
+submission-ready) encontrado en el primer target real probado.
