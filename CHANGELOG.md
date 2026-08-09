@@ -55,3 +55,25 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Estado: las 4 piezas de la arquitectura original están implementadas
 y validadas en vivo, con un hallazgo real (sin confirmar todavía como
 submission-ready) encontrado en el primer target real probado.
+
+- Investigación de reachability del hallazgo de `fabric-amcl`: rastreada
+  la cadena real de dependencias (`fabric` → `IBM/idemix` →
+  `fabric-amcl`), confirmado que `IBM/idemix` solo usa las curvas BN254
+  (esquema actual), nunca Dilithium. Conclusión honesta: probablemente
+  código muerto, **no se reporta a Hyperledger**. Actualizado en
+  `findings/2026-08-09_fabric-amcl-dilithium-panic.md`.
+- Segundo fuzz test real: `decodeToken` (`hyperledger/fabric-ca`),
+  elegido por reachability directa (parsea el token de autenticación de
+  cada request HTTP real a la API de fabric-ca-server). Corrida de 30
+  minutos con 16 cores en paralelo: sin crashes -- resultado limpio y
+  real, sugiere que el parseo es razonablemente robusto.
+- Piloto real de CodeQL como selector de targets (a pedido explícito
+  del usuario, probado en FRACTURE primero por ser de menor riesgo que
+  meterlo directo en el pipeline de producción de SPECTRE). Instalado
+  CodeQL CLI (`/opt/codeql-bundle`). Resultado honesto: construir la
+  base semántica tardó 5m47s para un repo mediano (mucho más lento que
+  semgrep); la consulta `targets/codeql_queries/fuzz_candidates.ql` SÍ
+  encontró `VerifyToken` -- la misma función elegida a mano para el
+  fuzz test de `decodeToken`, validación real de que el enfoque
+  funciona -- pero con 420 resultados totales, demasiado ruido para
+  usar sin refinar la consulta primero.
