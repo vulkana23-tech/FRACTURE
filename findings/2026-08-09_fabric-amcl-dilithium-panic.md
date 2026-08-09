@@ -1,7 +1,11 @@
 # hyperledger/fabric-amcl — panic real en verificación de firma Dilithium
 
-**Estado**: candidato encontrado, **sin triagear todavía** (ver
-"Falta antes de reportar" abajo) — no está confirmado como submission-ready.
+**Estado (2026-08-09, actualizado tras investigar reachability)**:
+bug real y reproducible, pero **probablemente NO submission-ready** —
+no se encontró ningún camino real en el ecosistema de Hyperledger que
+llegue a este código hoy. Ver "Investigación de reachability" abajo
+para el detalle completo. Se deja documentado igual (nunca se borra un
+hallazgo, aunque termine en "no reportar") -- production data.
 
 ## Resumen
 
@@ -61,14 +65,53 @@ go test -run FuzzDLVerify2 -v ./core/
   públicamente (duplicado) — no se buscó en el issue tracker real de
   fabric-amcl todavía.
 
-## Falta antes de reportar a Hyperledger
+## Investigación de reachability (2026-08-09)
 
-1. Rastrear los callers reales de `DL_verify_2`/`DL_verify` en el resto
-   del ecosistema Fabric (idemix, fabric-ca, etc.) para confirmar si
-   una `pk` corta puede llegar ahí desde una fuente externa sin
-   validación previa.
-2. Buscar en issues/PRs de `hyperledger/fabric-amcl` si esto ya se
-   reportó antes.
-3. Si se confirma reachability real, escribir un PoC minimo end-to-end
-   (no solo el test unitario) antes de reportar via el programa de
-   HackerOne de Hyperledger.
+Rastreada la cadena real de dependencias (lectura directa de
+`go.mod`/código fuente real, no asumida):
+
+1. `fabric-amcl` es dependencia **indirecta** del repo principal
+   `github.com/hyperledger/fabric` (confirmado leyendo `go.mod` real de
+   `fabric`).
+2. La dependencia **directa** real que la trae es
+   `github.com/IBM/idemix` (el esquema de credenciales de privacidad de
+   Fabric).
+3. Pero `IBM/idemix` (clonado y revisado el código real) **solo usa
+   fabric-amcl para las curvas de emparejamiento BN254 (`amcl.ECP`,
+   `amcl.ECP2`, `amcl.Fp256bn`) -- el esquema idemix ACTUAL, no
+   Dilithium**. Cero referencias a `DL_verify`/Dilithium en todo
+   `IBM/idemix`.
+4. Dentro del propio `fabric-amcl`, nada más en el repo llama a
+   `DL_verify_2` -- es codigo de libreria puro, sin ningun caller
+   interno tampoco.
+
+**Conclusión**: el soporte de Dilithium (post-cuántico) en
+`fabric-amcl` parece haberse agregado de forma anticipada/preventiva,
+pero no se encontró ningún camino real, en el ecosistema Hyperledger
+actual, que efectivamente invoque `DL_verify_2` con datos externos (ni
+con datos de ningún tipo). Es decir: el bug es real, pero hoy parece
+ser **código muerto** desde la perspectiva de impacto de seguridad --
+la mayoría de los programas de bug bounty excluyen explícitamente
+hallazgos en código inalcanzable/no usado.
+
+**Lo que esto NO descarta** (límites reales de esta investigación, no
+una prueba exhaustiva):
+- Solo se revisaron `fabric` (repo principal) e `IBM/idemix`
+  directamente -- Hyperledger tiene decenas de subproyectos, alguno
+  distinto podría importar `fabric-amcl` y sí usar Dilithium.
+- `fabric-amcl` es una librería de propósito general (pese al nombre)
+  -- proyectos de terceros fuera del ecosistema Hyperledger podrían
+  usarla, aunque eso ya quedaría fuera del scope del programa de
+  bounty de Hyperledger específicamente.
+- No se buscó en el issue tracker real de `fabric-amcl` si esto ya es
+  conocido.
+
+## Decisión
+
+No se reporta a Hyperledger por ahora -- sin reachability confirmada,
+no calificaría como hallazgo real en la mayoría de los programas. Se
+deja documentado como aprendizaje real del primer ciclo completo de
+FRACTURE: encontrar un crash es solo el primer paso, la reachability
+es lo que separa un hallazgo real de una curiosidad técnica -- misma
+lección que ya aprendimos hoy mismo con el triage de SPECTRE (VettedSec
+REACHABLE vs. la función específica del CVE).
