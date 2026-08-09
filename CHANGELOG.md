@@ -19,3 +19,14 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   repo principal `hyperledger/fabric` (ya cubierto por OSS-Fuzz con
   libFuzzer+ASAN) y `hyperledger/besu` (Java, fuera de scope de
   lenguaje).
+- `harness_gen/generate_harness.py`: segunda pieza real implementada.
+  Clona un repo C/C++, lee un header público, y usa `qwen3-coder:30b`
+  (Ollama, reusando la instancia que ya corre para SPECTRE) para
+  redactar un borrador de harness de libFuzzer. Instalado clang 18 en
+  el VPS para poder compilar/validar de verdad. Validado en vivo contra
+  cJSON (librería de prueba, no target real): la primera corrida tenía
+  2 bugs reales (include con case incorrecto, `stdint.h` faltante),
+  corregidos con post-procesamiento determinístico
+  (`_fix_common_issues`) -- confirmado que una segunda corrida ya
+  compila y corre sin intervención manual (543,934 ejecuciones reales
+  en 6 segundos).
