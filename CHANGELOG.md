@@ -30,3 +30,16 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   (`_fix_common_issues`) -- confirmado que una segunda corrida ya
   compila y corre sin intervención manual (543,934 ejecuciones reales
   en 6 segundos).
+- `orchestrator/run_go_fuzzer.py`: tercera pieza real implementada.
+  Fuzzing nativo de Go (`go test -fuzz`) contra un repo real, con
+  paralelismo real. Bug real encontrado y arreglado: `fabric-amcl` no
+  tiene `go.mod` (código viejo estilo GOPATH) — `_ensure_go_module()`
+  genera uno local en el clon temporal antes de fuzzear.
+  **Primer hallazgo real de todo el proyecto**: `DL_verify_2`
+  (verificación de firma Dilithium post-cuántica) crashea con un panic
+  real de Go en el primer input de prueba (bytes vacíos) — falta
+  validar la longitud de la clave pública antes de indexarla en
+  `DL_unpack_pk`. Documentado con evaluación honesta de severidad en
+  `findings/2026-08-09_fabric-amcl-dilithium-panic.md` — candidato
+  real, todavía sin confirmar reachability end-to-end antes de
+  reportarlo.
