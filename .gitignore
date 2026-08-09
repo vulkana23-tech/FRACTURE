@@ -1,0 +1,23 @@
+# Entornos virtuales y Python
+__pycache__/
+*.py[cod]
+venv/
+env/
+.venv/
+.env
+
+# Corpus/crashes de fuzzing (binarios, pueden pesar mucho -- se
+# regeneran corriendo el fuzzer, no se versionan)
+corpus/
+crashes/
+*.log
+
+# Toolchains compilados de los targets fuzzeados
+build/
+*.o
+*.a
+
+# IDEs y SO
+.vscode/
+.idea/
+.DS_Store
