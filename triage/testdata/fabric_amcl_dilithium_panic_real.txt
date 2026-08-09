@@ -1,0 +1,34 @@
+=== RUN   FuzzDLVerify2
+=== RUN   FuzzDLVerify2/seed#0
+--- FAIL: FuzzDLVerify2 (0.00s)
+    --- FAIL: FuzzDLVerify2/seed#0 (0.00s)
+panic: runtime error: index out of range [0] with length 0 [recovered]
+	panic: runtime error: index out of range [0] with length 0
+
+goroutine 19 [running]:
+testing.tRunner.func1.2({0x5b8b00, 0xc000180048})
+	/usr/lib/go-1.22/src/testing/testing.go:1631 +0x24a
+testing.tRunner.func1()
+	/usr/lib/go-1.22/src/testing/testing.go:1634 +0x377
+panic({0x5b8b00?, 0xc000180048?})
+	/usr/lib/go-1.22/src/runtime/panic.go:770 +0x132
+github.com/hyperledger/fabric-amcl/core.DL_unpack_pk({0x709f60?, 0x0?, 0x0?}, {0xc00010e530?, 0x0?, 0x0?}, {0xc000192000?, 0x0?, 0x0?}, {0x786500, ...})
+	/root/.claude/jobs/ab62c579/tmp/fabric-amcl-fixture/core/DILITHIUM.go:484 +0x165
+github.com/hyperledger/fabric-amcl/core.DL_verify({0x709f60, 0x8, 0x8}, {0x786500?, 0x0, 0x0}, {0x786500, 0x0, 0x0}, {0x786500, ...})
+	/root/.claude/jobs/ab62c579/tmp/fabric-amcl-fixture/core/DILITHIUM.go:1202 +0x2ea
+github.com/hyperledger/fabric-amcl/core.DL_verify_2(...)
+	/root/.claude/jobs/ab62c579/tmp/fabric-amcl-fixture/core/DILITHIUM.go:1265
+github.com/hyperledger/fabric-amcl/core.FuzzDLVerify2.func1(0xc0001657d0?, {0x786500?, 0xc000138180?, 0x0?}, {0x786500?, 0xc00016f588?, 0xc000165780?}, {0x786500, 0x0, 0x0})
+	/root/.claude/jobs/ab62c579/tmp/fabric-amcl-fixture/core/dilithium_verify_test.go:19 +0x71
+reflect.Value.call({0x5999a0?, 0x5d9650?, 0x13?}, {0x5c99bf, 0x4}, {0xc00012e2a0, 0x4, 0x4?})
+	/usr/lib/go-1.22/src/reflect/value.go:596 +0xca6
+reflect.Value.Call({0x5999a0?, 0x5d9650?, 0x4edbed?}, {0xc00012e2a0?, 0x5c8fc0?, 0xf?})
+	/usr/lib/go-1.22/src/reflect/value.go:380 +0xb9
+testing.(*F).Fuzz.func1.1(0xc000150680?)
+	/usr/lib/go-1.22/src/testing/fuzz.go:335 +0x325
+testing.tRunner(0xc000150680, 0xc00018a000)
+	/usr/lib/go-1.22/src/testing/testing.go:1689 +0xfb
+created by testing.(*F).Fuzz.func1 in goroutine 18
+	/usr/lib/go-1.22/src/testing/fuzz.go:322 +0x574
+FAIL	github.com/hyperledger/fabric-amcl/core	0.009s
+FAIL
