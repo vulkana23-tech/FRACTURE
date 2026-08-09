@@ -100,12 +100,40 @@ de red/DB, compila aislada. No se necesita levantar ningún servidor
 Zabbix real ni tocar su infraestructura -- coherente con la disciplina
 de FRACTURE.
 
-## Próximo paso (no implementado todavía)
+## Harness real generado y compilado (2026-08-10)
 
-Generar el harness real con `harness_gen/generate_harness.py` contra
-`zbx_json_open` (firma simple: `const char *` -> ideal para
-`LLVMFuzzerTestOneInput`), compilar con
-`clang -fsanitize=fuzzer,address` igual que se validó con cJSON, y
-correr el fuzzer real. Pendiente de confirmación explícita del usuario
-antes de arrancar (paso de trabajo nuevo, no solo la búsqueda de
-programa que se pidió hoy).
+`harness_gen/generate_harness.py` (Ollama/qwen3-coder:30b) timeouteó
+(180s) contra el header público completo `zbxjson.h` -- 260 líneas son
+macros `ZBX_PROTO_TAG_*` sin relación al parser, probablemente
+confundieron/sobrecargaron al modelo corriendo en CPU con contención de
+otros procesos. Escrito a mano en su lugar (`orchestrator/fuzz_harnesses/zabbix_zbxjson_open_harness.c`)
+-- firma real mínima (`int zbx_json_open(const char *buffer, struct
+zbx_json_parse *jp)`), sin necesidad de IA para algo esta chico.
+
+**Aislar la librería del resto del monorepo fue el trabajo real**: el
+build oficial de Zabbix usa autotools (`./configure` genera
+`config.h` con macros `HAVE_*_H` reales del sistema) -- en vez de correr
+el `./configure` completo (pull de dependencias opcionales pesadas:
+PCRE2, OpenSSL, etc.), se escribió un `config.h` mínimo a mano
+declarando solo los `HAVE_*_H` de headers POSIX/glibc que genuinamente
+existen en este Linux (mismo resultado que autoconf detectaría en este
+sistema, sin inventar nada). Iterando contra errores reales del
+linker (no supuestos) se armó la lista mínima de fuentes reales
+necesarias: `zbxjson/{json,json_parser,jsonobj}.c` +
+`zbxstr/str.c` + `zbxalgo/*.c` + `zbxcommon/{common_log,common_str,misc,components_strings_representations}.c`
++ `zbxnum/num.c`. Dos funciones (`zbx_jsonpath_compile`/`_clear`) se
+stubbearon (nunca las ejecuta `zbx_json_open`, solo están linkeadas
+porque comparten unidad de compilación con `json.c`; arrastrar
+`jsonpath.c` real hubiera sumado `zbxregexp`/`zbxvariant`/`zbxexpr` sin
+necesidad real). Receta completa reproducible en
+`orchestrator/fuzz_harnesses/zabbix_zbxjson_open_build.sh` +
+`_config.h`.
+
+**Compiló y linkeó limpio** con `clang -fsanitize=fuzzer,address`.
+Smoke test real: 2.7M ejecuciones en 16s (~171k exec/s), sin crash en
+esa corrida corta.
+
+**Corrida real lanzada**: 8 workers en paralelo (`-jobs=8 -workers=8`),
+30 minutos (`-max_total_time=1800`), en
+`/opt/fracture/build/zabbix_zbxjson/` (build/corpus/crashes, todo
+gitignored). Resultado se documenta acá cuando termine.
