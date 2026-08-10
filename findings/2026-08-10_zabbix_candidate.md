@@ -136,4 +136,36 @@ esa corrida corta.
 **Corrida real lanzada**: 8 workers en paralelo (`-jobs=8 -workers=8`),
 30 minutos (`-max_total_time=1800`), en
 `/opt/fracture/build/zabbix_zbxjson/` (build/corpus/crashes, todo
-gitignored). Resultado se documenta acá cuando termine.
+gitignored).
+
+## Resultado de la corrida (2026-08-10, 30 min, 8 workers)
+
+**~1.64 mil millones de ejecuciones combinadas, cero crashes, cero
+errores de ASan.** `crashes/` vacío, ningún log de worker con
+`ERROR`/`crash`/`leak`/`abort`. `zbx_json_open()` sobrevivió una
+campaña real de fuzzing sin encontrar un bug de memoria en esta
+primera pasada -- no es evidencia de que el código esté libre de
+bugs, solo de que esta corrida puntual no encontró ninguno con este
+corpus semilla mínimo (3 seeds a mano: `{}`, un mensaje real de sender
+data, y texto no-JSON).
+
+**Efecto colateral real detectado durante esta corrida**: los 8
+workers a ~99% CPU cada uno (de 18 cores totales del VPS) le sacaron
+CPU a Ollama el tiempo suficiente como para que un chequeo de
+política real de SPECTRE (`bugbounty_refresh_scope_and_policy`, sobre
+el programa `crypto` de HackerOne) timeoutee y caiga a un fallback
+`"unclear"`, disparando una alerta CRÍTICA falsa de "scanning pasó de
+permitido a otra cosa". Confirmado el diagnóstico reintentando el
+mismo parse a mano dos veces: con el fuzzer corriendo, timeout exacto
+de 120.1s (mismo fallback); apenas terminó el fuzzer, el mismo call
+real tardó 25.3s y devolvió correctamente `"allowed"` -- corregido en
+la base de SPECTRE. **Nota operativa para corridas futuras de
+FRACTURE**: correr fuzzing pesado (muchos workers) compite de verdad
+por CPU con Ollama compartido entre SPECTRE y FRACTURE en este mismo
+VPS -- vale la pena considerar `nice`/`cpuset` o coordinar horarios
+si se repite.
+
+**Próximo paso natural (no implementado)**: ampliar el corpus semilla
+con ejemplos reales del protocolo trapper (sender data, agent data,
+proxy config) para guiar mejor la mutación hacia estructuras JSON
+anidadas complejas, y/o correr una campaña más larga.
