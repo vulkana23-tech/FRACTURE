@@ -77,3 +77,44 @@ submission-ready) encontrado en el primer target real probado.
   fuzz test de `decodeToken`, validación real de que el enfoque
   funciona -- pero con 420 resultados totales, demasiado ruido para
   usar sin refinar la consulta primero.
+- Quinto y sexto target reales: `FromString` (fabric-contract-api-go,
+  limpio) y `json_parse_string`/parson dentro del enclave SGX real de
+  fabric-private-chaincode -- **hallazgo real confirmado**, primero
+  con ASan (heap-buffer-overflow determinístico en `skip_quotes`) y
+  después con un PoC completo contra un enclave SGX real (SDK oficial
+  de Intel, modo simulación): crash real del proceso enclave
+  confirmado, y **fuga de confidencialidad end-to-end confirmada y
+  reproducida 3/3** -- memoria de stack del enclave devuelta al host
+  no confiable disfrazada de JSON válido. Ver
+  `findings/2026-08-10_fabric-private-chaincode_parson_CONFIRMED.md`.
+  Reporte en inglés preparado para enviar, PoC empaquetado en
+  `orchestrator/fuzz_harnesses/fpc_sgx_leak_poc.zip`.
+- Corregido un error propio: se había asumido que Hyperledger no tenía
+  programa de bug bounty pago. Es falso -- programa real en HackerOne
+  (`hackerone.com/hyperledger`, bajo LFDT desde la reorganización),
+  con pagos reales (Critical desde \$2000, High desde \$1500, Medium
+  desde \$500, Low desde \$200). Confirmado que `fabric-private-chaincode`
+  y `fabric-sdk-go`, entre otros, están en el alcance elegible
+  (`eligible_for_submission=true` en la tabla `bugbounty_scope_assets`
+  de SPECTRE). El reporte del hallazgo de parson se va a reformatear
+  para ese canal en vez de la Security Advisory genérica de GitHub.
+- Séptimo target real: `extractConfig` (`pkg/fab/chconfig/chconfig.go`,
+  fabric-sdk-go) -- **segundo hallazgo real confirmado de la sesión**,
+  esta vez sin necesitar fuzzing: se vio leyendo el código
+  (`block.Data.Data[0]` indexado sin chequear que `block.Data` no sea
+  nil ni que el slice tenga elementos, pese a que sí chequea
+  `block.Header == nil`) y se confirmó con un repro directo --
+  panic real (nil pointer dereference y, en la variante con slice
+  vacío, index out of range), 100% determinístico, misma línea exacta
+  en ambos casos. Reachable desde `ChannelConfig.Query()` (API pública
+  real) contra la respuesta de un peer u orderer ya autenticado del
+  canal -- no hace falta un atacante externo, alcanza con que un solo
+  participante bizantino/con bug propio devuelva un bloque de config
+  incompleto para crashear cualquier cliente que lo consulte. Ver
+  `findings/2026-08-10_fabric-sdk-go_chconfig_extractconfig_CONFIRMED.md`.
+- Octavo target real, en curso: `FuzzParseTransactionEnvelope`
+  (`pkg/client/transactionparser.go`, fabric-gateway) -- cadena de 6
+  `proto.Unmarshal` anidados sobre bytes que devuelve el Gateway/peer
+  como respuesta a `Endorse()`. Campaña de 40 min corriendo en
+  background con los 18 cores reales del VPS; smoke test de 60s previo
+  salió limpio (1.69M ejecuciones, cobertura real creciendo).
