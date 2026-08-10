@@ -1,0 +1,22 @@
+enclave {
+    trusted {
+        public void ecall_run_leak_test(
+                [in, size=payload_len] const uint8_t *payload, uint32_t payload_len,
+                [out, size=out_cap] char *out, uint32_t out_cap, [out] uint32_t *out_used,
+                [out] int *unmarshal_status);
+        public void ecall_probe_bounds();
+        public void ecall_dump_raw(
+                [in, size=payload_len] const uint8_t *payload, uint32_t payload_len,
+                [out, size=out_cap] uint8_t *out, uint32_t out_cap);
+        public void ecall_dump_raw2(
+                [in, size=payload_len] const uint8_t *payload, uint32_t payload_len,
+                [out, size=out_cap] uint8_t *out, uint32_t out_cap);
+        public void ecall_run_leak_test2(
+                [in, size=payload_len] const uint8_t *payload, uint32_t payload_len,
+                [out, size=out_cap] char *out, uint32_t out_cap, [out] uint32_t *out_used,
+                [out] int *unmarshal_status);
+    };
+    untrusted {
+        void ocall_checkpoint([in, string] const char *msg);
+    };
+};

