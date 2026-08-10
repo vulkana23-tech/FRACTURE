@@ -62,5 +62,31 @@ usado en `NewEnvelope`).
 ## Corrida
 
 Lanzada vía `orchestrator/run_go_fuzzer.py`, 30 minutos,
-`-parallel=12` (de 18 cores reales del VPS). Resultado se documenta
-acá cuando termine.
+`-parallel=12` (de 18 cores reales del VPS).
+
+**Primer intento invalidado**: terminó con `returncode=1` sin ningún
+crash guardado en `testdata/fuzz/FuzzNewStateEP/`, pero el `stderr`
+mostraba `go: downloading github.com/stretchr/testify v1.11.1` --
+sospechoso porque esa dependencia la usa el archivo de test YA
+existente del paquete (`statebasedimpl_test.go`), no el fuzz test
+nuevo. Investigado antes de confiar en el resultado (mismo criterio de
+esta sesión: nunca reportar sin verificar): reproduje el mismo comando
+a mano dos veces (10s serial, 90s a `-parallel=12` igual que la
+corrida real) y ambas salieron limpias (`returncode=0`). Conclusión:
+fue un flake del entorno -- probablemente resolución de dependencias
+de Go interrumpida por contención real de CPU/red con la campaña de
+90 min sobre zabbix que recién estaba terminando en ese momento, no un
+problema del fuzz test ni del código real. Descartado el resultado,
+re-lanzado limpio.
+
+**Resultado real (corrida limpia, 30 min, `-parallel=12`)**:
+`returncode=0`, sin crashes. `NewStateEP` sobrevivió esta campaña sin
+que se encontrara un panic real de type-confusion en el doble
+unmarshal anidado.
+
+## Estado de los 4 targets Go probados hasta ahora
+
+Ninguno de los 4 (`fabric-amcl`/Dilithium, `fabric-ca`/decodeToken,
+`fabric-config`/NewEnvelope, `fabric-chaincode-go`/NewStateEP) generó
+un crash real todavía, entre campañas de 30-90 min cada una. Quedan 8
+de los 12 candidatos originales de Hyperledger sin tocar.
