@@ -67,4 +67,19 @@ para la corrida real vía `run_go_fuzzer.py`.
 ## Corrida
 
 Lanzada vía `orchestrator/run_go_fuzzer.py`, 30 minutos,
-`-parallel=12`. Resultado se documenta acá cuando termine.
+`-parallel=12`.
+
+**Resultado real**: `returncode=0`, sin crashes. `FromString` (y por
+lo tanto `createArraySliceMapOrStruct`/`json.Unmarshal` vía reflection
+sobre el struct compuesto de prueba) sobrevivió los 30 minutos sin que
+se encontrara un panic real.
+
+## Estado de los 5 targets Go probados hasta ahora
+
+Ninguno de los 5 (`fabric-amcl`/Dilithium, `fabric-ca`/decodeToken,
+`fabric-config`/NewEnvelope, `fabric-chaincode-go`/NewStateEP,
+`fabric-contract-api-go`/FromString) generó un crash real todavía,
+entre campañas de 30-90 min cada una. Quedan 7 de los 12 candidatos
+originales de Hyperledger sin tocar (fabric-admin-sdk, fabric-cli,
+fabric-lib-go, fabric-private-chaincode, fabric-protos-go,
+fabric-protos-go-apiv2, fabric-samples).
