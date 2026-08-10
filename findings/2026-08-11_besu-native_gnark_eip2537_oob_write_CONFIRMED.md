@@ -3,10 +3,61 @@
 **Estado: bug de memoria real y demostrado empíricamente (repro determinístico,
 corrupción de heap confirmada con un canary real, glibc detectó la
 corrupción y abortó al liberar memoria). Reachability desde el precompilado
-EVM real de Besu verificada y descartada HOY (el único caller actual
-siempre reserva el tamaño correcto) -- documentado como hallazgo de
-robustez/defensa-en-profundidad real, no como exploit directo en
-producción actual. NO reportado todavía.**
+EVM real de Besu verificada y descartada HOY -- el único caller *interno*
+de Besu (`AbstractBLS12PrecompiledContract`) siempre reserva el tamaño
+correcto. PERO: los métodos nativos de EIP-2537 están declarados
+`public static native` en Java (a diferencia de los de EIP-196, que son
+`private` y sí tienen un guardián explícito -- ver sección de
+comparación) -- cualquier consumidor externo de `besu-native` como
+librería puede llamarlos directo, hoy, sin ningún refactor de por medio.
+NO reportado todavía.**
+
+## Actualización: comparación directa con EIP-196 en el mismo repo -- la severidad real es mayor de lo que pensé al principio
+
+Los propios autores de `besu-native` **ya conocen exactamente esta clase
+de riesgo** -- lo documentaron explícitamente en `LibGnarkEIP196.java`:
+
+```java
+/**
+ * SAFETY: This method validates output buffer size before calling native code to prevent JVM crashes from buffer overflows.
+ * The native methods use JNA direct mapping without bounds checking.
+ * ...
+ */
+public static int eip196_perform_operation(byte op, byte[] i, int i_len, byte[] output) {
+    ...
+    if (output.length < EIP196_PREALLOCATE_FOR_RESULT_BYTES) {
+      return EIP196_ERR_CODE_INVALID_OUTPUT_LENGTH;   // <- chequeo real, del lado Java
+    }
+    ret = eip196altbn128G1Add(i, output, i_len);
+    ...
+}
+
+private static native int eip196altbn128G1Add(...);   // <- PRIVATE, solo alcanzable via el guardian de arriba
+```
+
+`LibGnarkEIP196.java` marca los 3 métodos nativos como **`private`** y
+los enruta TODOS a través de `eip196_perform_operation`, que sí valida
+`output.length` antes de llamar. Comentario explícito en el código:
+"Assumes output length bounds are already checked, otherwise can lead
+to JVM crash".
+
+`LibGnarkEIP2537.java`, en cambio, declara los 11 métodos nativos
+(incluidas las 6 funciones vulnerables de este finding) como
+**`public static native`**:
+
+```java
+public static native int eip2537blsG1Add(byte[] input, byte[] output, byte[] error, int inputSize, int output_len, int err_len);
+```
+
+No hay ningún guardián equivalente -- `eip2537_perform_operation` existe
+como conveniencia, pero **nada impide que cualquier código Java con
+`besu-native` en el classpath llame `LibGnarkEIP2537.eip2537blsG1Add`
+directo**, sin pasar por ninguna validación, exactamente el escenario
+que los mismos autores ya identificaron como peligroso y arreglaron
+para EIP-196. `besu-native` es una librería reusable (artefacto Maven
+publicado, no exclusivo de Besu) -- cualquier otro proyecto JVM que la
+use para BLS12-381 hereda este riesgo hoy, sin necesitar ningún
+refactor futuro de por medio.
 
 ## Por qué este target
 
@@ -146,19 +197,24 @@ no besu-native) ->
 final byte[] result = new byte[LibGnarkEIP2537.EIP2537_PREALLOCATE_FOR_RESULT_BYTES];  // 256 bytes, siempre
 ```
 
-**Hoy, en el código real de Besu, el único caller que existe siempre
-reserva 256 bytes** (el máximo posible, más que suficiente para
+**Hoy, en el código real de Besu, el único caller INTERNO que existe
+siempre reserva 256 bytes** (el máximo posible, más que suficiente para
 cualquiera de las 6 operaciones) -- por eso el bug NO es explotable vía
-el precompilado EVM real en el Besu actual. Esto NO es una excusa para
-no reportarlo: es exactamente el patrón "landmine sin activar" -- el
-código nativo es memoria-insegro por diseño, y solo está a salvo
-porque el único llamador conocido hoy cumple una precondición que el
-código nunca hace cumplir. Cualquier refactor futuro, cualquier otro
-consumidor de esta librería (es una librería nativa reusable, no
-exclusiva de Besu), o cualquier binding alternativo que aloque el
-buffer más ajustado (128 en vez de 256, que sería la optimización
-"obvia" y razonable para alguien que no audite el código C/Go
-subyacente) dispara corrupción de heap real.
+el precompilado EVM real en el Besu actual, corriendo tal cual viene.
+
+Pero eso no es toda la historia. A diferencia de `LibGnarkEIP196.java`
+(ver sección de comparación arriba), donde los métodos nativos son
+`private` y solo alcanzables a través de un guardián real del lado
+Java, **los 11 métodos nativos de `LibGnarkEIP2537.java` -- incluidas
+las 6 funciones vulnerables -- están declarados `public static
+native`**. `besu-native` es una librería reusable, publicada como
+artefacto Maven independiente, no exclusiva de la instancia interna
+de Besu. Cualquier código Java que la tenga en el classpath (otro
+cliente, una herramienta de testing, un proyecto de terceros que
+quiera BLS12-381) puede llamar `LibGnarkEIP2537.eip2537blsG1Add(...)`
+directo, hoy, sin ningún refactor de por medio -- exactamente el
+patrón que los propios autores de este repo ya identificaron como
+peligroso y arreglaron para EIP-196, pero no para EIP-2537.
 
 ## Impacto
 
@@ -173,9 +229,12 @@ subyacente) dispara corrupción de heap real.
   corrupción), pero eso depende del layout de memoria en el momento --
   en otros contextos podría corromper datos adyacentes sin crashear
   inmediatamente, un escenario más peligroso todavía.
-- **No explotable HOY vía el precompilado EVM de Besu** (verificado,
-  ver arriba) -- pero el defecto de diseño en la librería nativa es
-  real e independiente de ese caller específico.
+- **No explotable HOY vía el precompilado EVM de Besu** (el caller
+  interno de Besu siempre usa el buffer máximo) -- **pero sí
+  directamente alcanzable, hoy, por cualquier consumidor externo de
+  `besu-native` como librería**, dado que la API pública no tiene
+  ningún guardián (a diferencia de la API equivalente de EIP-196 en el
+  mismo repo, que sí lo tiene).
 
 ## Causa raíz
 
@@ -184,18 +243,30 @@ en cada una de las 6 funciones pero nunca se usa para rechazar un
 buffer insuficiente antes de escribir -- ni siquiera la única función
 que lo captura en una variable (`castBuffer`) lo respeta realmente,
 al forzar un mínimo de 256 bytes sin importar lo que el caller haya
-declarado.
+declarado. A diferencia de EIP-196 (mismo repo, mismo tipo de riesgo),
+acá no hay ningún guardián del lado Java tampoco -- los métodos
+nativos son `public`, no `private`.
 
 ## Próximo paso
 
-1. Confirmar el mismo patrón en `gnark-eip-196.go` (BN254/EIP-196) --
-   no verificado todavía en esta sesión, mismo autor/estilo, muy
-   probable que comparta el defecto.
+1. **Confirmado**: `gnark-eip-196.go` (BN254/EIP-196) NO comparte el
+   mismo problema de exposición -- sus 3 métodos nativos son `private`
+   y están protegidos por un guardián real (`eip196_perform_operation`,
+   que valida `output.length` antes de llamar). El código nativo en sí
+   (`g1AffineEncode`, que escribe 64 bytes con `copy()` sin recibir
+   ningún parámetro de longitud del output) es igual de inseguro por
+   diseño que el de EIP-2537, pero está mitigado del lado Java para
+   EIP-196 y NO para EIP-2537 -- esa asimetría es justamente la parte
+   más reportable de este hallazgo.
 2. Reportar a Hyperledger -- Besu está confirmado en el alcance
    elegible del programa real de HackerOne (`hackerone.com/hyperledger`,
-   scope incluye `besu`/`besu-native`). El framing honesto es
-   "defense-in-depth / API insegura por diseño en código criptográfico
-   nativo, con PoC de corrupción de heap real, no explotable hoy vía
-   el único caller conocido de Besu pero sí para cualquier otro
-   consumidor de la librería" -- clasificable razonablemente, aunque
-   la decisión final de severidad es del equipo de seguridad.
+   scope incluye `besu`/`besu-native`). El framing honesto y más fuerte
+   es: "API pública insegura por diseño en código criptográfico nativo,
+   con PoC de corrupción de heap real; el propio repo demuestra que los
+   autores ya conocían y mitigaron esta clase exacta de riesgo para
+   EIP-196, pero la misma protección falta en EIP-2537, cuyos métodos
+   nativos vulnerables son además `public`, no `private` -- alcanzable
+   hoy por cualquier consumidor externo de la librería, no solo por un
+   hipotético refactor futuro de Besu" -- clasificable razonablemente
+   como High, aunque la decisión final de severidad es del equipo de
+   seguridad.
