@@ -165,7 +165,50 @@ por CPU con Ollama compartido entre SPECTRE y FRACTURE en este mismo
 VPS -- vale la pena considerar `nice`/`cpuset` o coordinar horarios
 si se repite.
 
-**Próximo paso natural (no implementado)**: ampliar el corpus semilla
-con ejemplos reales del protocolo trapper (sender data, agent data,
-proxy config) para guiar mejor la mutación hacia estructuras JSON
-anidadas complejas, y/o correr una campaña más larga.
+## Corpus ampliado + campaña larga (2026-08-10, 90 min, 8 workers)
+
+Corpus semilla ampliado de 3 a 55 entradas reales, generadas a partir
+del código fuente real (no inventadas): estructuras reales del
+protocolo trapper leídas de `send_buffer.c` (sender data) y
+`trapper.c` (los valores reales de `request` que el servidor
+reconoce -- agent data, active checks, proxy heartbeat, proxy config,
+zabbix.stats, history.push), más casos límite deliberados (unicode,
+bytes de control, números extremos/científicos, anidamiento profundo
+hasta 500 niveles, arrays/objetos anchos de 2000 elementos, JSON
+malformado a propósito -- comas colgantes, llaves desbalanceadas,
+claves duplicadas, BOM). Script real:
+`gen_corpus.py` (no commiteado, generador puntual). libFuzzer
+minimizó el corpus heredado de la corrida anterior (41k archivos,
+muchos redundantes) a 504 entradas cubriendo la misma cobertura (224
+regiones / 1137 features) antes de arrancar la campaña larga.
+
+**Mitigación aplicada por el efecto colateral de la corrida anterior**:
+esta vez se lanzó con `nice -n 10` para no volver a competir de más
+por CPU con Ollama.
+
+**Resultado real**: **~6.18 mil millones de ejecuciones combinadas**
+(8 workers × 90 min), **cero crashes, cero errores de ASan**. El
+corpus final quedó en 49.742 entradas (de 504 iniciales) -- muchas
+nuevas rutas de cobertura descubiertas por la mutación real, ninguna
+disparó un bug de memoria. Confirmado además que el `nice` funcionó:
+cero eventos de `policy`/alertas críticas en los logs de SPECTRE
+durante toda la corrida (vs. el incidente real de crypto.com en la
+corrida anterior), y Ollama respondió en 35ms justo después de
+terminar.
+
+**Conclusión honesta**: dos campañas reales (30 min + 90 min, ~7.8B
+ejecuciones combinadas) sin encontrar un crash en `zbx_json_open`.
+Esto reduce la confianza en que haya un bug de memoria trivial de
+alcanzar con mutación pura desde este corpus semilla, pero NO es
+prueba de ausencia de bugs -- el parser real (`json_parser.c`) es
+recursivo-descendente con profundidad acotada explícitamente (`depth`
+como parámetro), lo cual probablemente ya mitiga stack overflow por
+anidamiento (varios de los seeds de anidamiento profundo fueron
+`REDUCE`ados/descartados por no aportar cobertura nueva, sugiriendo
+que el limite de profundidad se activa temprano y de forma segura).
+
+**Próximo paso natural (no implementado)**: este target ya está
+razonablemente explorado por ahora -- mejor invertir el próximo ciclo
+de fuzzing en un target C/C++ nuevo (otro programa, u otra función
+dentro de zabbix con menos cobertura ya probada) en vez de seguir
+extendiendo la misma campaña sin nueva señal.
