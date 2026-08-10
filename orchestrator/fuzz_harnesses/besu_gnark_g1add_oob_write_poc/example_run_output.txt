@@ -1,0 +1,113 @@
+Input valido: 2 puntos G1 reales (256 bytes)
+Output buffer declarado: 16 bytes (bien mas chico que los 128 documentados)
+Canary de 64 bytes (0xCC) inmediatamente despues del buffer, en memoria C real...
+eip2537blsG1Add retorno = 0 (0=exito, 1=error)
+bytes del canary sobreescritos mas alla del buffer de 16: 48 de 64
+*** CONFIRMADO: escritura fuera de limites, empieza en offset +0 mas alla del cOutputLen=16 declarado ***
+hex de los primeros 32 bytes despues del buffer declarado:
+0572cbea904d67468808c8eb50a9450c9721db309128012543902d0ac358a62a
+munmap_chunk(): invalid pointer
+SIGABRT: abort
+PC=0x7594d469ec0c m=0 sigcode=18446744073709551610
+signal arrived during cgo execution
+
+goroutine 1 gp=0xc000002380 m=0 mp=0x666180 [syscall]:
+runtime.cgocall(0x513e40, 0xc0000cbb80)
+	/root/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.4.linux-amd64/src/runtime/cgocall.go:167 +0x4b fp=0xc0000cbb58 sp=0xc0000cbb20 pc=0x46ff2b
+main._Cfunc_free(0x25cc6140)
+	_cgo_gotypes.go:74 +0x3a fp=0xc0000cbb80 sp=0xc0000cbb58 pc=0x4ff57a
+main.main.main.func4.func7()
+	/root/.claude/jobs/923da9b1/tmp/gnark_test/fracture_repro.go:43 +0x35 fp=0xc0000cbbb8 sp=0xc0000cbb80 pc=0x4fff95
+main.main()
+	/root/.claude/jobs/923da9b1/tmp/gnark_test/fracture_repro.go:79 +0x7ca fp=0xc0000cbf50 sp=0xc0000cbbb8 pc=0x4ffeea
+runtime.main()
+	/root/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.4.linux-amd64/src/runtime/proc.go:285 +0x29d fp=0xc0000cbfe0 sp=0xc0000cbf50 pc=0x44171d
+runtime.goexit({})
+	/root/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.4.linux-amd64/src/runtime/asm_amd64.s:1693 +0x1 fp=0xc0000cbfe8 sp=0xc0000cbfe0 pc=0x478721
+
+goroutine 2 gp=0xc000002e00 m=nil [force gc (idle)]:
+runtime.gopark(0x0?, 0x0?, 0x0?, 0x0?, 0x0?)
+	/root/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.4.linux-amd64/src/runtime/proc.go:460 +0xce fp=0xc000066fa8 sp=0xc000066f88 pc=0x471dce
+runtime.goparkunlock(...)
+	/root/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.4.linux-amd64/src/runtime/proc.go:466
+runtime.forcegchelper()
+	/root/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.4.linux-amd64/src/runtime/proc.go:373 +0xb3 fp=0xc000066fe0 sp=0xc000066fa8 pc=0x441a53
+runtime.goexit({})
+	/root/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.4.linux-amd64/src/runtime/asm_amd64.s:1693 +0x1 fp=0xc000066fe8 sp=0xc000066fe0 pc=0x478721
+created by runtime.init.7 in goroutine 1
+	/root/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.4.linux-amd64/src/runtime/proc.go:361 +0x1a
+
+goroutine 3 gp=0xc000003340 m=nil [GC sweep wait]:
+runtime.gopark(0x0?, 0x0?, 0x0?, 0x0?, 0x0?)
+	/root/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.4.linux-amd64/src/runtime/proc.go:460 +0xce fp=0xc000067780 sp=0xc000067760 pc=0x471dce
+runtime.goparkunlock(...)
+	/root/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.4.linux-amd64/src/runtime/proc.go:466
+runtime.bgsweep(0xc000092000)
+	/root/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.4.linux-amd64/src/runtime/mgcsweep.go:279 +0x94 fp=0xc0000677c8 sp=0xc000067780 pc=0x42cc74
+runtime.gcenable.gowrap1()
+	/root/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.4.linux-amd64/src/runtime/mgc.go:212 +0x25 fp=0xc0000677e0 sp=0xc0000677c8 pc=0x420ec5
+runtime.goexit({})
+	/root/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.4.linux-amd64/src/runtime/asm_amd64.s:1693 +0x1 fp=0xc0000677e8 sp=0xc0000677e0 pc=0x478721
+created by runtime.gcenable in goroutine 1
+	/root/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.4.linux-amd64/src/runtime/mgc.go:212 +0x66
+
+goroutine 4 gp=0xc000003500 m=nil [GC scavenge wait]:
+runtime.gopark(0xc000092000?, 0x5805f0?, 0x1?, 0x0?, 0xc000003500?)
+	/root/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.4.linux-amd64/src/runtime/proc.go:460 +0xce fp=0xc000067f78 sp=0xc000067f58 pc=0x471dce
+runtime.goparkunlock(...)
+	/root/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.4.linux-amd64/src/runtime/proc.go:466
+runtime.(*scavengerState).park(0x665080)
+	/root/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.4.linux-amd64/src/runtime/mgcscavenge.go:425 +0x49 fp=0xc000067fa8 sp=0xc000067f78 pc=0x42a749
+runtime.bgscavenge(0xc000092000)
+	/root/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.4.linux-amd64/src/runtime/mgcscavenge.go:653 +0x3c fp=0xc000067fc8 sp=0xc000067fa8 pc=0x42acdc
+runtime.gcenable.gowrap2()
+	/root/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.4.linux-amd64/src/runtime/mgc.go:213 +0x25 fp=0xc000067fe0 sp=0xc000067fc8 pc=0x420e65
+runtime.goexit({})
+	/root/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.4.linux-amd64/src/runtime/asm_amd64.s:1693 +0x1 fp=0xc000067fe8 sp=0xc000067fe0 pc=0x478721
+created by runtime.gcenable in goroutine 1
+	/root/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.4.linux-amd64/src/runtime/mgc.go:213 +0xa5
+
+goroutine 5 gp=0xc000003a40 m=nil [GOMAXPROCS updater (idle)]:
+runtime.gopark(0x0?, 0x0?, 0x0?, 0x0?, 0x0?)
+	/root/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.4.linux-amd64/src/runtime/proc.go:460 +0xce fp=0xc000068788 sp=0xc000068768 pc=0x471dce
+runtime.goparkunlock(...)
+	/root/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.4.linux-amd64/src/runtime/proc.go:466
+runtime.updateMaxProcsGoroutine()
+	/root/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.4.linux-amd64/src/runtime/proc.go:6720 +0xe7 fp=0xc0000687e0 sp=0xc000068788 pc=0x44f947
+runtime.goexit({})
+	/root/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.4.linux-amd64/src/runtime/asm_amd64.s:1693 +0x1 fp=0xc0000687e8 sp=0xc0000687e0 pc=0x478721
+created by runtime.defaultGOMAXPROCSUpdateEnable in goroutine 1
+	/root/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.4.linux-amd64/src/runtime/proc.go:6708 +0x37
+
+goroutine 6 gp=0xc0000b2000 m=nil [finalizer wait]:
+runtime.gopark(0x450915?, 0x419085?, 0xb8?, 0x1?, 0xc000002380?)
+	/root/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.4.linux-amd64/src/runtime/proc.go:460 +0xce fp=0xc000066620 sp=0xc000066600 pc=0x471dce
+runtime.runFinalizers()
+	/root/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.4.linux-amd64/src/runtime/mfinal.go:210 +0x107 fp=0xc0000667e0 sp=0xc000066620 pc=0x41fe67
+runtime.goexit({})
+	/root/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.4.linux-amd64/src/runtime/asm_amd64.s:1693 +0x1 fp=0xc0000667e8 sp=0xc0000667e0 pc=0x478721
+created by runtime.createfing in goroutine 1
+	/root/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.4.linux-amd64/src/runtime/mfinal.go:172 +0x3d
+
+rax    0x0
+rbx    0x124de7
+rcx    0x7594d469ec0c
+rdx    0x6
+rdi    0x124de7
+rsi    0x124de7
+rbp    0x7ffe4e0bcb80
+rsp    0x7ffe4e0bcb40
+r8     0xffffffff
+r9     0x0
+r10    0x8
+r11    0x246
+r12    0x6
+r13    0x7ffe4e0bccc0
+r14    0x16
+r15    0x7ffe4e0bccc0
+rip    0x7594d469ec0c
+rflags 0x246
+cs     0x33
+fs     0x0
+gs     0x0
+exit status 2

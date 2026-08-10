@@ -131,3 +131,31 @@ submission-ready) encontrado en el primer target real probado.
   (`fabric-cli`, `fabric-lib-go` -- ambos revisados y descartados por
   baja superficie relevante; quedan `fabric-protos-go-apiv2`,
   `fabric-sdk-py/java/node/java-chaincode` sin tocar).
+- Noveno target real, completo: `FuzzNewApplicationPolicy`
+  (`pkg/chaincode/signaturepolicy.go`, fabric-admin-sdk) -- parser de
+  DSL hecho a mano (`expr-lang/expr` + dos pasadas propias con regex)
+  para políticas de endorsement tipo `OR('Org1MSP.member',...)`.
+  Smoke test de 60s ya mostró mucha más densidad de cobertura real
+  que los targets basados en protobuf (955 "interesting" vs. ~150-160
+  típico). Campaña completa de 40 min, 18 cores: **limpia, `PASS`,
+  92,489,903 ejecuciones reales**, sin crashes.
+- Décimo target real: `besu-native` (Hyperledger Besu, cliente
+  Ethereum) -- **tercer hallazgo real confirmado de la sesión**, sin
+  fuzzing, con repro directo. `gnark/gnark-jni/gnark-eip-2537.go`
+  (wrapper Go/cgo para los precompilados EIP-2537/BLS12-381) recibe
+  `cOutputLen` documentado como precondición de seguridad
+  ("javaOutputBuf must be at least ... bytes") pero nunca lo usa antes
+  de escribir el resultado con `C.memcpy` y aritmética de punteros
+  cruda. PoC real (usando `gnark-crypto` real para generar un punto G1
+  válido, no datos inventados) confirma escritura fuera de límites: un
+  buffer de salida de 16 bytes declarado terminó con 48 de 64 bytes de
+  un canary real sobreescritos, y el proceso abortó con
+  `munmap_chunk(): invalid pointer` -- corrupción de heap real, no un
+  crash cosmético. Reachability verificada en el repo real de
+  `hyperledger/besu`: el único caller actual
+  (`AbstractBLS12PrecompiledContract.java`) siempre reserva el máximo
+  de 256 bytes, así que NO es explotable hoy vía el precompilado EVM
+  real -- documentado honestamente como defecto de diseño real en una
+  librería nativa reusable ("landmine sin activar"), no como exploit
+  directo en producción. Ver
+  `findings/2026-08-11_besu-native_gnark_eip2537_oob_write_CONFIRMED.md`.
