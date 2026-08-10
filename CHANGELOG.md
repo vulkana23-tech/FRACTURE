@@ -112,9 +112,22 @@ submission-ready) encontrado en el primer target real probado.
   participante bizantino/con bug propio devuelva un bloque de config
   incompleto para crashear cualquier cliente que lo consulte. Ver
   `findings/2026-08-10_fabric-sdk-go_chconfig_extractconfig_CONFIRMED.md`.
-- Octavo target real, en curso: `FuzzParseTransactionEnvelope`
+- Octavo target real, completo: `FuzzParseTransactionEnvelope`
   (`pkg/client/transactionparser.go`, fabric-gateway) -- cadena de 6
   `proto.Unmarshal` anidados sobre bytes que devuelve el Gateway/peer
-  como respuesta a `Endorse()`. Campaña de 40 min corriendo en
-  background con los 18 cores reales del VPS; smoke test de 60s previo
-  salió limpio (1.69M ejecuciones, cobertura real creciendo).
+  como respuesta a `Endorse()`. Campaña de 40 min con los 18 cores
+  reales del VPS: **limpia, `PASS`, 171,494,451 ejecuciones reales**,
+  sin ningún crash. Ver
+  `findings/2026-08-10_fabric-gateway_parsetransactionenvelope.md`.
+- Revisión manual de `fabric-admin-sdk` (mismo criterio que encontró
+  los dos hallazgos reales de la sesión: buscar indexado `[0]`/acceso
+  a slice sin chequeo de longitud cerca de `proto.Unmarshal`) --
+  resultado honesto: nada obvio. A diferencia de `fabric-sdk-go`, acá
+  `ensureValidResponses()` sí chequea `len(responses) == 0` antes de
+  indexar, y el resto de los `Unmarshal` son wrappers de un solo nivel
+  con manejo de error correcto. Candidato para una campaña de fuzzing
+  real si se quiere invertir más tiempo, pero no hubo señal de lectura
+  de código que lo priorizara sobre otros repos todavía sin tocar
+  (`fabric-cli`, `fabric-lib-go` -- ambos revisados y descartados por
+  baja superficie relevante; quedan `fabric-protos-go-apiv2`,
+  `fabric-sdk-py/java/node/java-chaincode` sin tocar).
