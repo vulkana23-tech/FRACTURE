@@ -81,6 +81,46 @@ systemctl enable --now fracture-orchestrator
 journalctl -u fracture-orchestrator -f
 ```
 
+## Capacidad real / escala (2026-08-15)
+
+Medido en vivo, no supuesto: con la config actual (`--max-concurrent 2`,
+9 workers por target) y 18 targets reales en el registro, `mpstat -P ALL`
+dio **0.00% idle promediado en los 18 cores durante la corrida real**
+del daemon. Este VPS no tiene margen de CPU sin usar -- subir la
+concurrencia no agrega throughput agregado nuevo, solo cambia CÓMO se
+reparte el mismo total de cores entre profundidad (menos targets a la
+vez, más workers c/u) y amplitud (más targets a la vez, menos workers
+c/u).
+
+**La cuenta real de cadencia** con la config actual: 18 targets × 40min
+de ciclo / 2 concurrentes ≈ 6h por sweep completa ≈ ~4 sweeps/día ≈
+~2.7h de fuzzing real acumulado por target por día. Razonable, no un
+problema real que haya que resolver -- se documenta acá para que la
+próxima persona que toque `--max-concurrent` lo cambie con el número
+real en la mano, no a ojo. Si se quiere más amplitud (tocar los 18
+targets más seguido) a costa de menos profundidad por ciclo,
+`--max-concurrent 6` (3 workers c/u) es un cambio de un solo flag,
+probado en vivo que funciona -- no se cambió el default de 2 porque no
+hay evidencia real de que la cadencia actual esté causando un problema
+concreto, solo el trade-off en sí.
+
+**Sobre "fuzzing distribuido"**: no está construido, y no se fabricó
+nada que aparente estarlo. Este VPS es la única máquina disponible --
+distribuir de verdad necesita infraestructura adicional real (otro
+VPS, burst a la nube) que es una decisión de costo/infra del usuario,
+no algo para asumir o inventar en una sesión de código.
+
+**Sobre "snapshot/persistent mode"**: la recomendación original (de la
+ronda de "qué le falta a FRACTURE") asumía el mundo de AFL++ clásico,
+donde fork-per-iteration es un costo real que ese modo elimina. No
+aplica igual acá -- libFuzzer (Rust vía cargo-fuzz, C) YA corre
+in-process/persistente por diseño (un solo proceso llama
+`LLVMFuzzerTestOneInput` en loop, sin fork por iteración), y el
+fuzzing nativo de Go (`go test -fuzz`) también. No hay una
+optimización real de "modo persistente" pendiente para el stack que
+este proyecto realmente usa -- corregido acá en vez de repetir la
+recomendación genérica sin chequear si aplicaba de verdad.
+
 ## Lo que falta (honesto)
 
 - El total de ejecuciones para targets Go queda en 0 en el registro —
