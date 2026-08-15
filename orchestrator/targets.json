@@ -143,5 +143,23 @@
     "known_finding": false,
     "state": {},
     "generated_by": "harness_gen/generate_go_harness.py (qwen3-coder:30b, 2 intentos, ver harness_gen/README.md)"
+  },
+  {
+    "id": "fpc_parson_json_parse_string",
+    "engine": "c",
+    "binary": "/opt/fracture/build/fpc_parson/fuzz_parson",
+    "corpus_dir": "/opt/fracture/build/fpc_parson/corpus",
+    "artifact_dir": "/opt/fracture/build/fpc_parson/crashes",
+    "known_finding": true,
+    "state": {}
+  },
+  {
+    "id": "zabbix_zbxjson_open",
+    "engine": "c",
+    "binary": "/opt/fracture/build/zabbix_zbxjson/fuzz_zbxjson",
+    "corpus_dir": "/opt/fracture/build/zabbix_zbxjson/corpus",
+    "artifact_dir": "/opt/fracture/build/zabbix_zbxjson/crashes",
+    "known_finding": false,
+    "state": {}
   }
 ]

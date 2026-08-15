@@ -10,9 +10,19 @@ Implementado y probado en vivo:
 - `run_rust_fuzzer.py` / `run_go_fuzzer.py` — corren UNA campaña
   puntual contra un target ya preparado (compilan, ejecutan, devuelven
   runs/crashes reales). Ya existían antes de esta ronda.
+- `run_c_fuzzer.py` — agregado esta ronda: generaliza la parte de
+  C que SÍ es genérica (correr un binario de libFuzzer ya compilado,
+  aislar logs por corrida, juntar crashes reales -- mismo bug de
+  `fuzz-N.log` en cwd que Rust, porque es libFuzzer/compiler-rt, no
+  algo de Rust). Compilar SIGUE siendo específico de cada target en C
+  (no hay equivalente a `cargo fuzz build`) -- eso queda en
+  `orchestrator/fuzz_harnesses/*_build.sh`, un script por target, como
+  ya era. Registrados los 2 binarios de C que ya existían compilados
+  (`fpc_parson`, `zabbix_zbxjson`) pero que hasta ahora nunca habían
+  entrado al registro/scheduler -- corrían solo a mano.
 - `scheduler.py` — la pieza que faltaba: loop real de sweeps sobre
-  `targets.json` (15 targets reales: 8 Rust vía cargo-fuzz, 7 Go vía
-  `go test -fuzz`), con:
+  `targets.json` (18 targets reales: 8 Rust vía cargo-fuzz, 8 Go vía
+  `go test -fuzz`, 2 C vía libFuzzer), con:
   - **Concurrencia acotada a los cores reales** (`--max-concurrent`,
     default 2 targets a la vez con `cores/max_concurrent` workers c/u
     — evita repartir 18 cores en migajas entre muchos targets a la
@@ -84,3 +94,12 @@ journalctl -u fracture-orchestrator -f
   más" de "esta seed particular tuvo mala suerte 3 veces seguidas".
   Suficiente para no gastar los mismos cores infinitamente en algo
   chato, no es ciencia exacta.
+- **No hay engine para JVM (Jazzer) ni para fuzzing binario
+  (QEMU mode de AFL++/Frida, para targets closed-source sin fuente)**
+  -- quedó fuera de esta ronda a propósito: JVM necesita levantar
+  Jazzer + un target Java real para probar en vivo (no hay ninguno en
+  el registro todavía, a diferencia de C que ya tenía 2 binarios reales
+  compilados esperando), y QEMU-mode es un toolchain aparte (requiere
+  compilar AFL++ con soporte QEMU, más pesado que agregar un `elif`
+  como se hizo acá con C). Mejor dejarlo documentado como pendiente
+  real que improvisar un engine sin nada real para validarlo en vivo.

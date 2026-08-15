@@ -54,6 +54,7 @@ from datetime import datetime, timezone
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from run_rust_fuzzer import run_rust_fuzzer  # noqa: E402
 from run_go_fuzzer import run_go_fuzzer  # noqa: E402
+from run_c_fuzzer import run_c_fuzzer  # noqa: E402
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "triage"))
 from triage_alerts import triage_all  # noqa: E402
@@ -223,6 +224,14 @@ def run_one_cycle(target: dict, duration_seconds: int, workers: int) -> dict:
             duration_seconds=duration_seconds,
             parallel=workers,
         )
+    elif target["engine"] == "c":
+        outcome = run_c_fuzzer(
+            binary=target["binary"],
+            corpus_dir=target["corpus_dir"],
+            artifact_dir=target["artifact_dir"],
+            duration_seconds=duration_seconds,
+            workers=workers,
+        )
     else:
         raise ValueError(f"engine desconocido: {target['engine']!r}")
 
@@ -239,7 +248,10 @@ def _update_state_after_cycle(target: dict, outcome: dict) -> None:
     state["cycles_completed"] = state.get("cycles_completed", 0) + 1
     state["last_cycle_at"] = _now_iso()
 
-    if target["engine"] == "rust":
+    if target["engine"] in ("rust", "c"):
+        # Mismo runtime de libFuzzer para ambos (compiler-rt) -- el
+        # formato de las lineas "cov:"/"Done N runs" es identico sea
+        # cual sea el lenguaje que se compilo, no es especifico de Rust.
         total_runs = outcome.get("total_runs", 0)
         cov = _parse_rust_coverage(outcome)
         prev_cov = state.get("last_cov")
