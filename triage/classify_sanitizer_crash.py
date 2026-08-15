@@ -27,7 +27,17 @@ from typing import Dict, List, Optional
 # que se busca el patron exacto que cada sanitizer imprime).
 # --------------------------------------------------------------------
 _ASAN_ERROR_RE = re.compile(r"ERROR: AddressSanitizer: (\S+)")
-_MSAN_ERROR_RE = re.compile(r"ERROR: MemorySanitizer: (\S+)")
+# Bug real encontrado en produccion (2026-08-15, primer fixture real de
+# MSan que se genero -- antes de esto el codigo asumia "ERROR:" sin
+# haberlo confirmado nunca contra una corrida real, tal cual advertia
+# el "Lo que falta" de este mismo README). MemorySanitizer por default
+# imprime "WARNING: MemorySanitizer: ..." -- no "ERROR:" -- y sigue
+# diciendo "WARNING" incluso con MSAN_OPTIONS=halt_on_error=1 (confirmado
+# en vivo, ese flag solo cambia si el proceso aborta despues, no el
+# prefijo del mensaje). Con el regex viejo, CUALQUIER hallazgo real de
+# MSan se perdia en silencio (extract_crash_info devolvia None, como si
+# fuera una corrida limpia).
+_MSAN_ERROR_RE = re.compile(r"(?:WARNING|ERROR): MemorySanitizer: (\S+)")
 _LSAN_ERROR_RE = re.compile(r"ERROR: LeakSanitizer: (.+)")
 _UBSAN_RUNTIME_ERROR_RE = re.compile(
     r"^(\S+):(\d+):(\d+): runtime error: (.+)$", re.MULTILINE

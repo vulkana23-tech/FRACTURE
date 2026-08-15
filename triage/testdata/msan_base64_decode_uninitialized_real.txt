@@ -1,0 +1,9 @@
+==2082774==WARNING: MemorySanitizer: use-of-uninitialized-value
+    #0 0x56ed3d1176cc in base64_decode(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>> const&) /root/.claude/jobs/b5bac52f/tmp/msan_test/base64.cpp:95:52
+    #1 0x56ed3d11950e in main /root/.claude/jobs/b5bac52f/tmp/msan_test/msan_driver.cpp:7:26
+    #2 0x7ae22be2a1c9  (/lib/x86_64-linux-gnu/libc.so.6+0x2a1c9) (BuildId: 328820b908de8ea1ef79afa8995e302e819163d7)
+    #3 0x7ae22be2a28a in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2a28a) (BuildId: 328820b908de8ea1ef79afa8995e302e819163d7)
+    #4 0x56ed3d07c614 in _start (/root/.claude/jobs/b5bac52f/tmp/msan_test/msan_test+0x33614) (BuildId: a203a4dc77724d83e64d87155e776412f282bad0)
+
+SUMMARY: MemorySanitizer: use-of-uninitialized-value /root/.claude/jobs/b5bac52f/tmp/msan_test/base64.cpp:95:52 in base64_decode(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>> const&)
+Exiting

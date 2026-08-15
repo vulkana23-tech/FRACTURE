@@ -59,10 +59,25 @@ crudos del crash.
 
 ## Lo que falta (honesto)
 
-- MemorySanitizer no tiene fixture real todavía (haría falta
-  recompilar libc++ instrumentada, más esfuerzo del que se justificaba
-  en esta ronda) -- el parseo de MSAN reusa el mismo patrón que ASAN
-  (`ERROR: MemorySanitizer: <tipo>`), pero sin un fixture real
-  corriendo no hay confirmación en vivo de que el formato coincida
-  100%.
-- LeakSanitizer tampoco tiene fixture real -- mismo motivo.
+- ~~MemorySanitizer no tiene fixture real todavía~~ **cerrado
+  (2026-08-15), y encontró un bug real en el camino**: resultó NO
+  hacer falta recompilar libc++ instrumentada (el uso sin inicializar
+  real que se encontró es sobre un array local, no algo dentro de la
+  STL) -- pero el fixture real reveló que MemorySanitizer imprime
+  **`WARNING: MemorySanitizer: ...`** por default, nunca `ERROR:`
+  (confirmado además que `MSAN_OPTIONS=halt_on_error=1` NO cambia el
+  prefijo, solo si el proceso aborta después). El código viejo solo
+  reconocía `ERROR:` -- cualquier hallazgo real de MSan se hubiera
+  perdido en silencio (`extract_crash_info` devolvía `None`, indistinguible
+  de una corrida limpia) hasta que se generó este fixture y se probó
+  de verdad. Corregido, con test de regresión real
+  (`msan_base64_decode_uninitialized_real.txt`, capturado compilando
+  `common/base64/base64.cpp` con `-fsanitize=memory` de verdad contra
+  el uso sin inicializar ya anotado en
+  `findings/2026-08-15_fabric-private-chaincode_unmarshal_values_leak.md`).
+- ~~LeakSanitizer tampoco tiene fixture real~~ **cerrado (2026-08-15)**:
+  el leak real de `fpc_unmarshal_values` (ver
+  `findings/2026-08-15_fabric-private-chaincode_unmarshal_values_leak.md`)
+  dio un fixture real (`lsan_unmarshal_values_leak_real.txt`) --
+  confirmó severidad `low` (leak real, no corrupción de memoria) y
+  extracción correcta de frames.

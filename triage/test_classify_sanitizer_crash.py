@@ -87,6 +87,39 @@ def test_controlled_abort_with_returncode_hint_is_needs_review_not_high():
     assert info["severity"] == "needs_review"
 
 
+def test_lsan_real_leak_is_low_severity():
+    # Fixture real: leak real y confirmado en produccion (2026-08-15,
+    # ver findings/2026-08-15_fabric-private-chaincode_unmarshal_values_leak.md)
+    # -- no un caso sintetico, es el LeakSanitizer real de correr
+    # fuzz_unmarshal_values contra `[{"key":"a"}]`.
+    info = extract_crash_info(_load("lsan_unmarshal_values_leak_real.txt"))
+    assert info is not None
+    assert info["sanitizer"] == "LeakSanitizer"
+    assert info["bug_type"] == "memory-leak"
+    # Leak real, pero no corrupcion de memoria -- severidad baja, no alta.
+    assert info["severity"] == "low"
+    assert "json_object_init" in info["top_frame"]
+
+
+def test_msan_real_uninitialized_use_is_detected():
+    # Regresion real del bug encontrado armando ESTE fixture
+    # (2026-08-15): MemorySanitizer imprime "WARNING: MemorySanitizer:"
+    # por default, NUNCA "ERROR:" (confirmado ademas que
+    # MSAN_OPTIONS=halt_on_error=1 no cambia el prefijo) -- el regex
+    # viejo (solo "ERROR:") perdia CUALQUIER hallazgo real de MSan en
+    # silencio. Fixture real: uso de memoria sin inicializar real en
+    # base64_decode (char_array_4[1] nunca asignado antes de leerse
+    # con un base64 de 1 caracter sin padding, "A") -- el mismo bug
+    # anotado a mano leyendo el codigo en
+    # findings/2026-08-15_fabric-private-chaincode_unmarshal_values_leak.md,
+    # confirmado en vivo con -fsanitize=memory real.
+    info = extract_crash_info(_load("msan_base64_decode_uninitialized_real.txt"))
+    assert info is not None
+    assert info["sanitizer"] == "MemorySanitizer"
+    assert info["bug_type"] == "use-of-uninitialized-value"
+    assert "base64_decode" in info["top_frame"]
+
+
 def test_returns_none_for_clean_output():
     clean = "running 1 test\ntest fuzz_target::run ... ok\n\ntest result: ok. 1 passed\n"
     assert extract_crash_info(clean) is None

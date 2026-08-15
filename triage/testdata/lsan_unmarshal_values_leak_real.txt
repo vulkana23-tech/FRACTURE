@@ -1,0 +1,262 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 85383427
+INFO: Loaded 1 modules   (1819 inline 8-bit counters): 1819 [0x5b8f249c02c0, 0x5b8f249c09db), 
+INFO: Loaded 1 PC tables (1819 PCs): 1819 [0x5b8f249c09e0,0x5b8f249c7b90), 
+./fuzz_unmarshal_values: Running 1 inputs 1 time(s) each.
+Running: /tmp/lsan_input_dir/leak_input
+
+=================================================================
+==2070053==ERROR: LeakSanitizer: detected memory leaks
+
+Indirect leak of 128 byte(s) in 1 object(s) allocated from:
+    #0 0x5b8f24920033 in malloc (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x10d033) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #1 0x5b8f2496d946 in json_object_init /opt/fracture/build/fpc_unmarshal_values/parson.c:447:30
+    #2 0x5b8f2496d946 in json_object_grow_and_rehash /opt/fracture/build/fpc_unmarshal_values/parson.c:507:23
+    #3 0x5b8f24967fef in json_object_add /opt/fracture/build/fpc_unmarshal_values/parson.c:579:15
+    #4 0x5b8f24961e2c in parse_object_value /opt/fracture/build/fpc_unmarshal_values/parson.c:971:18
+    #5 0x5b8f24961e2c in parse_value /opt/fracture/build/fpc_unmarshal_values/parson.c:906:20
+    #6 0x5b8f249621d0 in parse_array_value /opt/fracture/build/fpc_unmarshal_values/parson.c:1013:27
+    #7 0x5b8f249621d0 in parse_value /opt/fracture/build/fpc_unmarshal_values/parson.c:908:20
+    #8 0x5b8f24960ab8 in json_parse_string /opt/fracture/build/fpc_unmarshal_values/parson.c:1364:12
+    #9 0x5b8f24974d62 in unmarshal_values_standalone(std::map<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>>, std::allocator<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>> const, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>>>>&, char const*, unsigned int) /opt/fracture/build/fpc_unmarshal_values/harness.c++:51:24
+    #10 0x5b8f24974d62 in LLVMFuzzerTestOneInput /opt/fracture/build/fpc_unmarshal_values/harness.c++:98:5
+    #11 0x5b8f2486bf04 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x58f04) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #12 0x5b8f24855036 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x42036) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #13 0x5b8f2485aaea in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x47aea) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #14 0x5b8f248852a6 in main (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x722a6) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #15 0x71efe882a1c9  (/lib/x86_64-linux-gnu/libc.so.6+0x2a1c9) (BuildId: 328820b908de8ea1ef79afa8995e302e819163d7)
+    #16 0x71efe882a28a in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2a28a) (BuildId: 328820b908de8ea1ef79afa8995e302e819163d7)
+    #17 0x5b8f2484fc04 in _start (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x3cc04) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+
+Indirect leak of 88 byte(s) in 1 object(s) allocated from:
+    #0 0x5b8f24920033 in malloc (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x10d033) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #1 0x5b8f2496d9c6 in json_object_init /opt/fracture/build/fpc_unmarshal_values/parson.c:451:38
+    #2 0x5b8f2496d9c6 in json_object_grow_and_rehash /opt/fracture/build/fpc_unmarshal_values/parson.c:507:23
+    #3 0x5b8f24967fef in json_object_add /opt/fracture/build/fpc_unmarshal_values/parson.c:579:15
+    #4 0x5b8f24961e2c in parse_object_value /opt/fracture/build/fpc_unmarshal_values/parson.c:971:18
+    #5 0x5b8f24961e2c in parse_value /opt/fracture/build/fpc_unmarshal_values/parson.c:906:20
+    #6 0x5b8f249621d0 in parse_array_value /opt/fracture/build/fpc_unmarshal_values/parson.c:1013:27
+    #7 0x5b8f249621d0 in parse_value /opt/fracture/build/fpc_unmarshal_values/parson.c:908:20
+    #8 0x5b8f24960ab8 in json_parse_string /opt/fracture/build/fpc_unmarshal_values/parson.c:1364:12
+    #9 0x5b8f24974d62 in unmarshal_values_standalone(std::map<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>>, std::allocator<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>> const, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>>>>&, char const*, unsigned int) /opt/fracture/build/fpc_unmarshal_values/harness.c++:51:24
+    #10 0x5b8f24974d62 in LLVMFuzzerTestOneInput /opt/fracture/build/fpc_unmarshal_values/harness.c++:98:5
+    #11 0x5b8f2486bf04 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x58f04) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #12 0x5b8f24855036 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x42036) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #13 0x5b8f2485aaea in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x47aea) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #14 0x5b8f248852a6 in main (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x722a6) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #15 0x71efe882a1c9  (/lib/x86_64-linux-gnu/libc.so.6+0x2a1c9) (BuildId: 328820b908de8ea1ef79afa8995e302e819163d7)
+    #16 0x71efe882a28a in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2a28a) (BuildId: 328820b908de8ea1ef79afa8995e302e819163d7)
+    #17 0x5b8f2484fc04 in _start (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x3cc04) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+
+Indirect leak of 88 byte(s) in 1 object(s) allocated from:
+    #0 0x5b8f24920033 in malloc (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x10d033) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #1 0x5b8f2496d986 in json_object_init /opt/fracture/build/fpc_unmarshal_values/parson.c:449:36
+    #2 0x5b8f2496d986 in json_object_grow_and_rehash /opt/fracture/build/fpc_unmarshal_values/parson.c:507:23
+    #3 0x5b8f24967fef in json_object_add /opt/fracture/build/fpc_unmarshal_values/parson.c:579:15
+    #4 0x5b8f24961e2c in parse_object_value /opt/fracture/build/fpc_unmarshal_values/parson.c:971:18
+    #5 0x5b8f24961e2c in parse_value /opt/fracture/build/fpc_unmarshal_values/parson.c:906:20
+    #6 0x5b8f249621d0 in parse_array_value /opt/fracture/build/fpc_unmarshal_values/parson.c:1013:27
+    #7 0x5b8f249621d0 in parse_value /opt/fracture/build/fpc_unmarshal_values/parson.c:908:20
+    #8 0x5b8f24960ab8 in json_parse_string /opt/fracture/build/fpc_unmarshal_values/parson.c:1364:12
+    #9 0x5b8f24974d62 in unmarshal_values_standalone(std::map<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>>, std::allocator<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>> const, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>>>>&, char const*, unsigned int) /opt/fracture/build/fpc_unmarshal_values/harness.c++:51:24
+    #10 0x5b8f24974d62 in LLVMFuzzerTestOneInput /opt/fracture/build/fpc_unmarshal_values/harness.c++:98:5
+    #11 0x5b8f2486bf04 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x58f04) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #12 0x5b8f24855036 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x42036) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #13 0x5b8f2485aaea in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x47aea) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #14 0x5b8f248852a6 in main (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x722a6) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #15 0x71efe882a1c9  (/lib/x86_64-linux-gnu/libc.so.6+0x2a1c9) (BuildId: 328820b908de8ea1ef79afa8995e302e819163d7)
+    #16 0x71efe882a28a in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2a28a) (BuildId: 328820b908de8ea1ef79afa8995e302e819163d7)
+    #17 0x5b8f2484fc04 in _start (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x3cc04) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+
+Indirect leak of 88 byte(s) in 1 object(s) allocated from:
+    #0 0x5b8f24920033 in malloc (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x10d033) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #1 0x5b8f2496d9a6 in json_object_init /opt/fracture/build/fpc_unmarshal_values/parson.c:450:33
+    #2 0x5b8f2496d9a6 in json_object_grow_and_rehash /opt/fracture/build/fpc_unmarshal_values/parson.c:507:23
+    #3 0x5b8f24967fef in json_object_add /opt/fracture/build/fpc_unmarshal_values/parson.c:579:15
+    #4 0x5b8f24961e2c in parse_object_value /opt/fracture/build/fpc_unmarshal_values/parson.c:971:18
+    #5 0x5b8f24961e2c in parse_value /opt/fracture/build/fpc_unmarshal_values/parson.c:906:20
+    #6 0x5b8f249621d0 in parse_array_value /opt/fracture/build/fpc_unmarshal_values/parson.c:1013:27
+    #7 0x5b8f249621d0 in parse_value /opt/fracture/build/fpc_unmarshal_values/parson.c:908:20
+    #8 0x5b8f24960ab8 in json_parse_string /opt/fracture/build/fpc_unmarshal_values/parson.c:1364:12
+    #9 0x5b8f24974d62 in unmarshal_values_standalone(std::map<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>>, std::allocator<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>> const, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>>>>&, char const*, unsigned int) /opt/fracture/build/fpc_unmarshal_values/harness.c++:51:24
+    #10 0x5b8f24974d62 in LLVMFuzzerTestOneInput /opt/fracture/build/fpc_unmarshal_values/harness.c++:98:5
+    #11 0x5b8f2486bf04 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x58f04) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #12 0x5b8f24855036 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x42036) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #13 0x5b8f2485aaea in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x47aea) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #14 0x5b8f248852a6 in main (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x722a6) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #15 0x71efe882a1c9  (/lib/x86_64-linux-gnu/libc.so.6+0x2a1c9) (BuildId: 328820b908de8ea1ef79afa8995e302e819163d7)
+    #16 0x71efe882a28a in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2a28a) (BuildId: 328820b908de8ea1ef79afa8995e302e819163d7)
+    #17 0x5b8f2484fc04 in _start (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x3cc04) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+
+Indirect leak of 88 byte(s) in 1 object(s) allocated from:
+    #0 0x5b8f24920033 in malloc (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x10d033) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #1 0x5b8f2496d966 in json_object_init /opt/fracture/build/fpc_unmarshal_values/parson.c:448:29
+    #2 0x5b8f2496d966 in json_object_grow_and_rehash /opt/fracture/build/fpc_unmarshal_values/parson.c:507:23
+    #3 0x5b8f24967fef in json_object_add /opt/fracture/build/fpc_unmarshal_values/parson.c:579:15
+    #4 0x5b8f24961e2c in parse_object_value /opt/fracture/build/fpc_unmarshal_values/parson.c:971:18
+    #5 0x5b8f24961e2c in parse_value /opt/fracture/build/fpc_unmarshal_values/parson.c:906:20
+    #6 0x5b8f249621d0 in parse_array_value /opt/fracture/build/fpc_unmarshal_values/parson.c:1013:27
+    #7 0x5b8f249621d0 in parse_value /opt/fracture/build/fpc_unmarshal_values/parson.c:908:20
+    #8 0x5b8f24960ab8 in json_parse_string /opt/fracture/build/fpc_unmarshal_values/parson.c:1364:12
+    #9 0x5b8f24974d62 in unmarshal_values_standalone(std::map<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>>, std::allocator<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>> const, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>>>>&, char const*, unsigned int) /opt/fracture/build/fpc_unmarshal_values/harness.c++:51:24
+    #10 0x5b8f24974d62 in LLVMFuzzerTestOneInput /opt/fracture/build/fpc_unmarshal_values/harness.c++:98:5
+    #11 0x5b8f2486bf04 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x58f04) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #12 0x5b8f24855036 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x42036) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #13 0x5b8f2485aaea in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x47aea) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #14 0x5b8f248852a6 in main (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x722a6) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #15 0x71efe882a1c9  (/lib/x86_64-linux-gnu/libc.so.6+0x2a1c9) (BuildId: 328820b908de8ea1ef79afa8995e302e819163d7)
+    #16 0x71efe882a28a in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2a28a) (BuildId: 328820b908de8ea1ef79afa8995e302e819163d7)
+    #17 0x5b8f2484fc04 in _start (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x3cc04) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+
+Indirect leak of 72 byte(s) in 1 object(s) allocated from:
+    #0 0x5b8f24920033 in malloc (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x10d033) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #1 0x5b8f249612ff in json_object_make /opt/fracture/build/fpc_unmarshal_values/parson.c:417:42
+    #2 0x5b8f249612ff in json_value_init_object /opt/fracture/build/fpc_unmarshal_values/parson.c:1597:31
+    #3 0x5b8f249612ff in parse_object_value /opt/fracture/build/fpc_unmarshal_values/parson.c:930:20
+    #4 0x5b8f249612ff in parse_value /opt/fracture/build/fpc_unmarshal_values/parson.c:906:20
+    #5 0x5b8f249621d0 in parse_array_value /opt/fracture/build/fpc_unmarshal_values/parson.c:1013:27
+    #6 0x5b8f249621d0 in parse_value /opt/fracture/build/fpc_unmarshal_values/parson.c:908:20
+    #7 0x5b8f24960ab8 in json_parse_string /opt/fracture/build/fpc_unmarshal_values/parson.c:1364:12
+    #8 0x5b8f24974d62 in unmarshal_values_standalone(std::map<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>>, std::allocator<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>> const, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>>>>&, char const*, unsigned int) /opt/fracture/build/fpc_unmarshal_values/harness.c++:51:24
+    #9 0x5b8f24974d62 in LLVMFuzzerTestOneInput /opt/fracture/build/fpc_unmarshal_values/harness.c++:98:5
+    #10 0x5b8f2486bf04 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x58f04) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #11 0x5b8f24855036 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x42036) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #12 0x5b8f2485aaea in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x47aea) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #13 0x5b8f248852a6 in main (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x722a6) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #14 0x71efe882a1c9  (/lib/x86_64-linux-gnu/libc.so.6+0x2a1c9) (BuildId: 328820b908de8ea1ef79afa8995e302e819163d7)
+    #15 0x71efe882a28a in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2a28a) (BuildId: 328820b908de8ea1ef79afa8995e302e819163d7)
+    #16 0x5b8f2484fc04 in _start (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x3cc04) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+
+Indirect leak of 32 byte(s) in 1 object(s) allocated from:
+    #0 0x5b8f24920033 in malloc (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x10d033) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #1 0x5b8f24960d9a in json_value_init_string_no_copy /opt/fracture/build/fpc_unmarshal_values/parson.c:750:42
+    #2 0x5b8f24960d9a in parse_string_value /opt/fracture/build/fpc_unmarshal_values/parson.c:1047:13
+    #3 0x5b8f24960d9a in parse_value /opt/fracture/build/fpc_unmarshal_values/parson.c:910:20
+    #4 0x5b8f24961e14 in parse_object_value /opt/fracture/build/fpc_unmarshal_values/parson.c:965:21
+    #5 0x5b8f24961e14 in parse_value /opt/fracture/build/fpc_unmarshal_values/parson.c:906:20
+    #6 0x5b8f249621d0 in parse_array_value /opt/fracture/build/fpc_unmarshal_values/parson.c:1013:27
+    #7 0x5b8f249621d0 in parse_value /opt/fracture/build/fpc_unmarshal_values/parson.c:908:20
+    #8 0x5b8f24960ab8 in json_parse_string /opt/fracture/build/fpc_unmarshal_values/parson.c:1364:12
+    #9 0x5b8f24974d62 in unmarshal_values_standalone(std::map<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>>, std::allocator<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>> const, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>>>>&, char const*, unsigned int) /opt/fracture/build/fpc_unmarshal_values/harness.c++:51:24
+    #10 0x5b8f24974d62 in LLVMFuzzerTestOneInput /opt/fracture/build/fpc_unmarshal_values/harness.c++:98:5
+    #11 0x5b8f2486bf04 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x58f04) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #12 0x5b8f24855036 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x42036) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #13 0x5b8f2485aaea in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x47aea) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #14 0x5b8f248852a6 in main (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x722a6) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #15 0x71efe882a1c9  (/lib/x86_64-linux-gnu/libc.so.6+0x2a1c9) (BuildId: 328820b908de8ea1ef79afa8995e302e819163d7)
+    #16 0x71efe882a28a in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2a28a) (BuildId: 328820b908de8ea1ef79afa8995e302e819163d7)
+    #17 0x5b8f2484fc04 in _start (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x3cc04) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+
+Indirect leak of 32 byte(s) in 1 object(s) allocated from:
+    #0 0x5b8f24920033 in malloc (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x10d033) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #1 0x5b8f2496129d in json_value_init_object /opt/fracture/build/fpc_unmarshal_values/parson.c:1591:42
+    #2 0x5b8f2496129d in parse_object_value /opt/fracture/build/fpc_unmarshal_values/parson.c:930:20
+    #3 0x5b8f2496129d in parse_value /opt/fracture/build/fpc_unmarshal_values/parson.c:906:20
+    #4 0x5b8f249621d0 in parse_array_value /opt/fracture/build/fpc_unmarshal_values/parson.c:1013:27
+    #5 0x5b8f249621d0 in parse_value /opt/fracture/build/fpc_unmarshal_values/parson.c:908:20
+    #6 0x5b8f24960ab8 in json_parse_string /opt/fracture/build/fpc_unmarshal_values/parson.c:1364:12
+    #7 0x5b8f24974d62 in unmarshal_values_standalone(std::map<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>>, std::allocator<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>> const, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>>>>&, char const*, unsigned int) /opt/fracture/build/fpc_unmarshal_values/harness.c++:51:24
+    #8 0x5b8f24974d62 in LLVMFuzzerTestOneInput /opt/fracture/build/fpc_unmarshal_values/harness.c++:98:5
+    #9 0x5b8f2486bf04 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x58f04) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #10 0x5b8f24855036 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x42036) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #11 0x5b8f2485aaea in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x47aea) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #12 0x5b8f248852a6 in main (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x722a6) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #13 0x71efe882a1c9  (/lib/x86_64-linux-gnu/libc.so.6+0x2a1c9) (BuildId: 328820b908de8ea1ef79afa8995e302e819163d7)
+    #14 0x71efe882a28a in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2a28a) (BuildId: 328820b908de8ea1ef79afa8995e302e819163d7)
+    #15 0x5b8f2484fc04 in _start (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x3cc04) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+
+Indirect leak of 32 byte(s) in 1 object(s) allocated from:
+    #0 0x5b8f24920033 in malloc (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x10d033) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #1 0x5b8f24960ec2 in json_array_make /opt/fracture/build/fpc_unmarshal_values/parson.c:697:42
+    #2 0x5b8f24960ec2 in json_value_init_array /opt/fracture/build/fpc_unmarshal_values/parson.c:1612:30
+    #3 0x5b8f24960ec2 in parse_array_value /opt/fracture/build/fpc_unmarshal_values/parson.c:997:20
+    #4 0x5b8f24960ec2 in parse_value /opt/fracture/build/fpc_unmarshal_values/parson.c:908:20
+    #5 0x5b8f24960ab8 in json_parse_string /opt/fracture/build/fpc_unmarshal_values/parson.c:1364:12
+    #6 0x5b8f24974d62 in unmarshal_values_standalone(std::map<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>>, std::allocator<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>> const, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>>>>&, char const*, unsigned int) /opt/fracture/build/fpc_unmarshal_values/harness.c++:51:24
+    #7 0x5b8f24974d62 in LLVMFuzzerTestOneInput /opt/fracture/build/fpc_unmarshal_values/harness.c++:98:5
+    #8 0x5b8f2486bf04 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x58f04) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #9 0x5b8f24855036 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x42036) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #10 0x5b8f2485aaea in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x47aea) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #11 0x5b8f248852a6 in main (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x722a6) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #12 0x71efe882a1c9  (/lib/x86_64-linux-gnu/libc.so.6+0x2a1c9) (BuildId: 328820b908de8ea1ef79afa8995e302e819163d7)
+    #13 0x71efe882a28a in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2a28a) (BuildId: 328820b908de8ea1ef79afa8995e302e819163d7)
+    #14 0x5b8f2484fc04 in _start (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x3cc04) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+
+Indirect leak of 32 byte(s) in 1 object(s) allocated from:
+    #0 0x5b8f24920033 in malloc (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x10d033) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #1 0x5b8f24960e60 in json_value_init_array /opt/fracture/build/fpc_unmarshal_values/parson.c:1606:42
+    #2 0x5b8f24960e60 in parse_array_value /opt/fracture/build/fpc_unmarshal_values/parson.c:997:20
+    #3 0x5b8f24960e60 in parse_value /opt/fracture/build/fpc_unmarshal_values/parson.c:908:20
+    #4 0x5b8f24960ab8 in json_parse_string /opt/fracture/build/fpc_unmarshal_values/parson.c:1364:12
+    #5 0x5b8f24974d62 in unmarshal_values_standalone(std::map<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>>, std::allocator<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>> const, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>>>>&, char const*, unsigned int) /opt/fracture/build/fpc_unmarshal_values/harness.c++:51:24
+    #6 0x5b8f24974d62 in LLVMFuzzerTestOneInput /opt/fracture/build/fpc_unmarshal_values/harness.c++:98:5
+    #7 0x5b8f2486bf04 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x58f04) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #8 0x5b8f24855036 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x42036) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #9 0x5b8f2485aaea in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x47aea) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #10 0x5b8f248852a6 in main (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x722a6) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #11 0x71efe882a1c9  (/lib/x86_64-linux-gnu/libc.so.6+0x2a1c9) (BuildId: 328820b908de8ea1ef79afa8995e302e819163d7)
+    #12 0x71efe882a28a in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2a28a) (BuildId: 328820b908de8ea1ef79afa8995e302e819163d7)
+    #13 0x5b8f2484fc04 in _start (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x3cc04) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+
+Indirect leak of 8 byte(s) in 1 object(s) allocated from:
+    #0 0x5b8f24920033 in malloc (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x10d033) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #1 0x5b8f249725ad in json_array_resize /opt/fracture/build/fpc_unmarshal_values/parson.c:726:31
+    #2 0x5b8f24962ab8 in parse_array_value /opt/fracture/build/fpc_unmarshal_values/parson.c:1032:9
+    #3 0x5b8f24962ab8 in parse_value /opt/fracture/build/fpc_unmarshal_values/parson.c:908:20
+    #4 0x5b8f24960ab8 in json_parse_string /opt/fracture/build/fpc_unmarshal_values/parson.c:1364:12
+    #5 0x5b8f24974d62 in unmarshal_values_standalone(std::map<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>>, std::allocator<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>> const, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>>>>&, char const*, unsigned int) /opt/fracture/build/fpc_unmarshal_values/harness.c++:51:24
+    #6 0x5b8f24974d62 in LLVMFuzzerTestOneInput /opt/fracture/build/fpc_unmarshal_values/harness.c++:98:5
+    #7 0x5b8f2486bf04 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x58f04) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #8 0x5b8f24855036 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x42036) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #9 0x5b8f2485aaea in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x47aea) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #10 0x5b8f248852a6 in main (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x722a6) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #11 0x71efe882a1c9  (/lib/x86_64-linux-gnu/libc.so.6+0x2a1c9) (BuildId: 328820b908de8ea1ef79afa8995e302e819163d7)
+    #12 0x71efe882a28a in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2a28a) (BuildId: 328820b908de8ea1ef79afa8995e302e819163d7)
+    #13 0x5b8f2484fc04 in _start (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x3cc04) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+
+Indirect leak of 4 byte(s) in 1 object(s) allocated from:
+    #0 0x5b8f24920033 in malloc (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x10d033) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #1 0x5b8f24971e49 in process_string /opt/fracture/build/fpc_unmarshal_values/parson.c:873:29
+    #2 0x5b8f24971e49 in get_quoted_string /opt/fracture/build/fpc_unmarshal_values/parson.c:896:12
+    #3 0x5b8f24961c57 in parse_object_value /opt/fracture/build/fpc_unmarshal_values/parson.c:947:19
+    #4 0x5b8f24961c57 in parse_value /opt/fracture/build/fpc_unmarshal_values/parson.c:906:20
+    #5 0x5b8f249621d0 in parse_array_value /opt/fracture/build/fpc_unmarshal_values/parson.c:1013:27
+    #6 0x5b8f249621d0 in parse_value /opt/fracture/build/fpc_unmarshal_values/parson.c:908:20
+    #7 0x5b8f24960ab8 in json_parse_string /opt/fracture/build/fpc_unmarshal_values/parson.c:1364:12
+    #8 0x5b8f24974d62 in unmarshal_values_standalone(std::map<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>>, std::allocator<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>> const, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>>>>&, char const*, unsigned int) /opt/fracture/build/fpc_unmarshal_values/harness.c++:51:24
+    #9 0x5b8f24974d62 in LLVMFuzzerTestOneInput /opt/fracture/build/fpc_unmarshal_values/harness.c++:98:5
+    #10 0x5b8f2486bf04 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x58f04) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #11 0x5b8f24855036 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x42036) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #12 0x5b8f2485aaea in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x47aea) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #13 0x5b8f248852a6 in main (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x722a6) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #14 0x71efe882a1c9  (/lib/x86_64-linux-gnu/libc.so.6+0x2a1c9) (BuildId: 328820b908de8ea1ef79afa8995e302e819163d7)
+    #15 0x71efe882a28a in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2a28a) (BuildId: 328820b908de8ea1ef79afa8995e302e819163d7)
+    #16 0x5b8f2484fc04 in _start (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x3cc04) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+
+Indirect leak of 2 byte(s) in 1 object(s) allocated from:
+    #0 0x5b8f24920033 in malloc (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x10d033) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #1 0x5b8f24971e49 in process_string /opt/fracture/build/fpc_unmarshal_values/parson.c:873:29
+    #2 0x5b8f24971e49 in get_quoted_string /opt/fracture/build/fpc_unmarshal_values/parson.c:896:12
+    #3 0x5b8f24960d73 in parse_string_value /opt/fracture/build/fpc_unmarshal_values/parson.c:1043:24
+    #4 0x5b8f24960d73 in parse_value /opt/fracture/build/fpc_unmarshal_values/parson.c:910:20
+    #5 0x5b8f24961e14 in parse_object_value /opt/fracture/build/fpc_unmarshal_values/parson.c:965:21
+    #6 0x5b8f24961e14 in parse_value /opt/fracture/build/fpc_unmarshal_values/parson.c:906:20
+    #7 0x5b8f249621d0 in parse_array_value /opt/fracture/build/fpc_unmarshal_values/parson.c:1013:27
+    #8 0x5b8f249621d0 in parse_value /opt/fracture/build/fpc_unmarshal_values/parson.c:908:20
+    #9 0x5b8f24960ab8 in json_parse_string /opt/fracture/build/fpc_unmarshal_values/parson.c:1364:12
+    #10 0x5b8f24974d62 in unmarshal_values_standalone(std::map<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>>, std::allocator<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>> const, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>>>>&, char const*, unsigned int) /opt/fracture/build/fpc_unmarshal_values/harness.c++:51:24
+    #11 0x5b8f24974d62 in LLVMFuzzerTestOneInput /opt/fracture/build/fpc_unmarshal_values/harness.c++:98:5
+    #12 0x5b8f2486bf04 in fuzzer::Fuzzer::ExecuteCallback(unsigned char const*, unsigned long) (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x58f04) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #13 0x5b8f24855036 in fuzzer::RunOneTest(fuzzer::Fuzzer*, char const*, unsigned long) (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x42036) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #14 0x5b8f2485aaea in fuzzer::FuzzerDriver(int*, char***, int (*)(unsigned char const*, unsigned long)) (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x47aea) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #15 0x5b8f248852a6 in main (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x722a6) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+    #16 0x71efe882a1c9  (/lib/x86_64-linux-gnu/libc.so.6+0x2a1c9) (BuildId: 328820b908de8ea1ef79afa8995e302e819163d7)
+    #17 0x71efe882a28a in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2a28a) (BuildId: 328820b908de8ea1ef79afa8995e302e819163d7)
+    #18 0x5b8f2484fc04 in _start (/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values+0x3cc04) (BuildId: 07f1c2c0bec581578fe6706e668f2fb93f747fa9)
+
+SUMMARY: AddressSanitizer: 694 byte(s) leaked in 13 allocation(s).
+
+INFO: a leak has been found in the initial corpus.
+
+INFO: to ignore leaks on libFuzzer side use -detect_leaks=0.
+
