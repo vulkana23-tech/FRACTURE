@@ -129,12 +129,13 @@ recomendación genérica sin chequear si aplicaba de verdad.
 
 ## Lo que falta (honesto)
 
-- El total de ejecuciones para targets Go queda en 0 en el registro —
-  a diferencia de Rust, `go test -fuzz` no imprime un contador de runs
-  simple y estable en stdout entre versiones de Go; se podría instrumentar
-  parseando `execs: N` de las líneas `fuzz: elapsed:...`, no se hizo
-  todavía porque no bloquea nada funcional (el resto del estado sí es
-  real).
+- ~~El total de ejecuciones para targets Go queda en 0~~ **cerrado
+  (2026-08-15)**: `go test -fuzz` sí imprime un contador acumulado real
+  (`fuzz: elapsed: 8s, execs: 121195 (16635/sec), new interesting:
+  0...`) -- el último `execs:` de la corrida ya es el total (no
+  incremental como `new interesting:`, no hace falta sumar). Probado
+  en vivo contra `fabric_ca_decode_token`: `lifetime_runs` pasó de 0 a
+  317,440 en una corrida de 10s.
 - La detección de "estancado" es una heurística simple (cobertura
   plana N ciclos seguidos) — no sabe distinguir "este target ya no da
   más" de "esta seed particular tuvo mala suerte 3 veces seguidas".

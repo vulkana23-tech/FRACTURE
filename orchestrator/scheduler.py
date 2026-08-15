@@ -74,6 +74,7 @@ _PLATEAU_SKIP_MODULO = 3
 
 _RUST_COV_RE = re.compile(r"cov:\s*(\d+)")
 _GO_NEW_INTERESTING_RE = re.compile(r"new interesting:\s*(\d+)")
+_GO_EXECS_RE = re.compile(r"execs:\s*(\d+)")
 
 _shutdown_requested = False
 
@@ -125,6 +126,18 @@ def _parse_go_new_interesting(outcome: dict) -> "int | None":
     if not matches:
         return None
     return sum(int(m) for m in matches)
+
+
+def _parse_go_execs(outcome: dict) -> "int | None":
+    """`go test -fuzz` imprime lineas acumulativas reales tipo
+    "fuzz: elapsed: 8s, execs: 121195 (16635/sec), new interesting: 0
+    (total: 79)" -- el ultimo "execs:" de la corrida ya es el total
+    acumulado de la campana entera, no hace falta sumar nada (a
+    diferencia de "new interesting:", que si es incremental por
+    linea)."""
+    text = (outcome.get("stdout_tail", "") or "") + (outcome.get("stderr_tail", "") or "")
+    matches = _GO_EXECS_RE.findall(text)
+    return int(matches[-1]) if matches else None
 
 
 def _write_alert(target: dict, outcome: dict, crashes: list) -> None:
@@ -264,7 +277,8 @@ def _update_state_after_cycle(target: dict, outcome: dict) -> None:
             state["last_cov"] = cov
         crashes = outcome.get("crashes", [])
     else:  # go
-        total_runs = 0  # go test -fuzz no reporta un total de execs simple y estable en stdout
+        execs = _parse_go_execs(outcome)
+        total_runs = execs if execs is not None else 0
         new_interesting = _parse_go_new_interesting(outcome)
         if new_interesting is not None and new_interesting == 0:
             state["plateau_streak"] = state.get("plateau_streak", 0) + 1
