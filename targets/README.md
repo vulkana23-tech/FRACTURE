@@ -34,10 +34,57 @@ reales que sobreviven los filtros duros, `fabric-samples`,
 CERO harnesses todavía en `orchestrator/targets.json` -- candidatos
 concretos, no teóricos, para la próxima ronda de `harness_gen/`.
 
+## `find_patch_directed_candidates.py` -- fuzzing dirigido por parche
+
+Complementa `select_targets.py` (qué REPO fuzzear) con "qué FUNCIÓN
+específica priorizar dentro de un repo ya elegido": busca commits
+recientes cuyo mensaje suene a seguridad (overflow, UAF, CVE, null
+pointer, etc. -- inglés y español) y filtra los que en realidad son
+bumps de dependencias/CI (que sí mencionan "CVE" en el mensaje pero no
+tocan código propio). El código *alrededor* de un parche reciente es
+donde más probablemente haya variantes del mismo bug o un fix
+incompleto -- mucho más rápido que fuzzing ciego, y es una técnica
+real de bug bounty (muchos programas pagan por "regresión"/"fix
+incompleto"), no algo teórico.
+
+**Dos iteraciones reales de filtro, probadas en vivo contra
+`hyperledger/fabric-ca`** (documentado como caso de estudio en los
+tests, no solo en este README):
+1. Filtro por lista negra de archivos "ruido" (`go.mod`, `vendor/`,
+   `.github/`) -- un archivo nuevo (`osv-scanner.toml`) la esquivó en
+   la primera corrida real.
+2. Cambiado a lista BLANCA: un commit solo es candidato si toca al
+   menos un archivo con extensión de código fuente real, Y ese archivo
+   no está bajo `vendor/`/`node_modules/`/`third_party/`/`docs/`
+   (código vendoreado de terceros o tooling de docs, no lógica de la
+   app). Mucho más robusto -- no necesita mantenimiento cada vez que
+   aparece una herramienta de CI nueva.
+
+**Resultado real contra `hyperledger/fabric-ca`** (4 años de
+historial): 0 candidatos -- honesto, no un bug: TODO el historial de
+seguridad real de ese repo fueron bumps de dependencias, correctamente
+filtrados.
+
+**Resultado real contra `cloudflare/workerd`** (1 año): encontró
+fixes reales y recientes de use-after-free en
+`src/workerd/api/streams/` (`Address UAF and safety bugs in pipe
+handling`, `Fix use-after-free when a native jsg::Function frees
+itself mid-call`) y en `src/workerd/api/node/zlib-util.c++` -- código
+que este mismo proyecto **nunca harnesseó** (los 4 targets reales de
+workerd en `orchestrator/fuzz_harnesses/` son dataurl/encoding/
+formdata/mimetype, ninguno toca streams ni zlib). Candidato concreto y
+de alta prioridad para la próxima ronda de `harness_gen/`, no
+teórico.
+
 ## Uso
 
 ```
 venv/bin/python3 targets/select_targets.py [--program handle]
+
+venv/bin/python3 targets/find_patch_directed_candidates.py \
+  --repo https://github.com/cloudflare/workerd --since-days 365
+
+venv/bin/python3 -m pytest targets/ -v
 ```
 
 ## Nota sobre los READMEs de este repo
@@ -57,3 +104,12 @@ cero -- leer el código primero.
   un `GITHUB_TOKEN` real (5000/hora en vez de 60) dejaría de ser un
   problema, pero eso requiere que el usuario decida configurar uno,
   no se asumió ni se generó ningún token en esta ronda.
+- `find_patch_directed_candidates.py` no está conectado todavía a
+  `harness_gen/` (el candidato de `workerd`/zlib-util.c++ que encontró
+  hay que pasarlo a mano a `generate_go_harness.py`/
+  `generate_harness.py`) -- ambos ya toman `--repo`/función objetivo
+  por separado, conectarlos directo (que el output de uno alimente al
+  otro sin copiar/pegar a mano) es una extensión natural, no se hizo
+  en esta ronda porque `generate_go_harness.py` es para Go y el
+  candidato real que salió es C++ (`generate_harness.py`, que todavía
+  no tiene loop de validación real -- ver `harness_gen/README.md`).
