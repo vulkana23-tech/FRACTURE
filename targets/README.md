@@ -126,15 +126,29 @@ cero -- leer el código primero.
   un `GITHUB_TOKEN` real (5000/hora en vez de 60) dejaría de ser un
   problema, pero eso requiere que el usuario decida configurar uno,
   no se asumió ni se generó ningún token en esta ronda.
-- **No distingue la FORMA del bug** -- un commit puede mencionar "UAF"
-  o "null pointer" de verdad y aun así ser un bug de lifecycle de V8/JS
-  (necesita el motor JS real corriendo) en vez de un bug de parseo de
-  bytes (fuzzeable con libFuzzer). El caso real de `workerd` de arriba
-  es exactamente esto. No hay heurística barata conocida para
-  distinguirlos solo del mensaje de commit -- hace falta leer el diff
-  real (lo que se hizo a mano esta ronda) o, mejor señal automática:
-  si la función tocada tiene `jsg::Lock`/`v8::` en su firma, es
-  candidato a descartar de entrada. No implementado todavía.
+- ~~No distingue la FORMA del bug~~ **implementado (2026-08-15)**:
+  `_looks_js_engine_lifecycle_bound()` marca un candidato si el
+  contexto del hunk (heurística de `git show`) menciona
+  `jsg::`/`v8::`/`V8::` -- probado contra las firmas reales de los 3
+  candidatos de `workerd` ya investigados a mano Y contra
+  `unmarshal_values` (fabric-private-chaincode, que correctamente NO
+  se marca). Corrida real contra `workerd` de nuevo: **5 de 8**
+  candidatos quedaron marcados con la advertencia real en el output
+  del CLI.
+
+  **Limitación real encontrada corriendo esto en vivo, no teórica**:
+  el commit `644f2c1598` (el fix real de UAF en `jsg::Function`) **NO**
+  quedó marcado -- el hunk de git anclò el contexto a la clase
+  contenedora (`class Function<Ret(Args...)> {`) en vez de a la firma
+  del método real (`Ret operator()(jsg::Lock& jsl, ...)`), porque es
+  un método definido inline dentro del cuerpo de una clase template en
+  un header -- el propio heurístico de contexto de `git show` no
+  siempre baja hasta la firma del método en ese caso, es una
+  limitación de git mismo, no del regex. Una heurística más precisa
+  necesitaría parsear el AST real (tree-sitter o similar) en vez de
+  confiar en el contexto que `git show` ya infiere gratis -- no se
+  hizo en esta ronda, la señal actual (barata, 5/8 reales) sigue
+  siendo mejor que nada, con este límite documentado.
 - `find_patch_directed_candidates.py` no está conectado todavía a
   `harness_gen/` de forma automática (los candidatos reales que
   encontró se pasaron a mano a `generate_go_harness.py`/

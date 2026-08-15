@@ -146,6 +146,23 @@ def _guess_functions_touched(diff_text: str) -> List[str]:
     return guesses
 
 
+# Heuristica real agregada despues de investigar a mano 3 candidatos
+# reales de cloudflare/workerd (ver harness_gen/README.md, "Intento
+# real: candidato de workerd") -- los 3 eran bugs de ciclo de vida de
+# V8/JS (re-entrancy, GC de buffers, semantica de capacidades RPC),
+# nunca fuzzeables con libFuzzer porque necesitan el motor V8 real
+# corriendo una secuencia de llamadas JS. Las 3 firmas reales tenian
+# `jsg::Lock`/`jsg::Ref`/`jsg::Deserializer`/`v8::` en el contexto del
+# hunk -- marcador barato y real (no perfecto: puede haber falsos
+# positivos/negativos, es una señal de alerta para revision humana, no
+# un filtro duro que descarta candidatos solo).
+_JS_ENGINE_LIFECYCLE_MARKER_RE = re.compile(r"jsg::|v8::|V8::")
+
+
+def _looks_js_engine_lifecycle_bound(functions_touched_guess: List[str]) -> bool:
+    return any(_JS_ENGINE_LIFECYCLE_MARKER_RE.search(f) for f in functions_touched_guess)
+
+
 def find_patch_directed_candidates(repo_url: str, since_days: int = 365, max_commits: int = 20) -> List[Dict]:
     repo_dir = _clone_with_history(repo_url, since_days)
     try:
@@ -171,6 +188,7 @@ def find_patch_directed_candidates(repo_url: str, since_days: int = 365, max_com
             candidates.append({
                 **c,
                 "functions_touched_guess": functions,
+                "js_engine_lifecycle_bound": _looks_js_engine_lifecycle_bound(functions),
                 "diff_excerpt": diff_text[:2000],
             })
         return candidates
@@ -192,9 +210,14 @@ def main() -> None:
         print("Sin commits con mensaje relacionado a seguridad en esa ventana de tiempo.")
         return
 
-    print(f"\n{len(candidates)} commit(s) real(es) con mensaje relacionado a seguridad:\n")
+    fuzzable = [c for c in candidates if not c["js_engine_lifecycle_bound"]]
+    lifecycle_bound = [c for c in candidates if c["js_engine_lifecycle_bound"]]
+    print(f"\n{len(candidates)} commit(s) real(es) con mensaje relacionado a seguridad "
+          f"({len(fuzzable)} candidato(s) real(es), {len(lifecycle_bound)} probablemente "
+          f"NO fuzzeable(s) con libFuzzer -- ver abajo):\n")
     for c in candidates:
-        print(f"[{c['date']}] {c['hash'][:10]} -- {c['subject']}")
+        marker = "  ⚠️  probablemente ciclo de vida de V8/JS, NO byte-parsing -- revisar el diff a mano antes de generar un harness" if c["js_engine_lifecycle_bound"] else ""
+        print(f"[{c['date']}] {c['hash'][:10]} -- {c['subject']}{marker}")
         print(f"  archivos: {', '.join(c['files_changed'][:5])}"
               f"{' ...' if len(c['files_changed']) > 5 else ''}")
         if c["functions_touched_guess"]:

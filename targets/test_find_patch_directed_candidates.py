@@ -12,6 +12,7 @@ from find_patch_directed_candidates import (
     _SECURITY_KEYWORDS,
     _guess_functions_touched,
     _has_source_code_change,
+    _looks_js_engine_lifecycle_bound,
 )
 
 
@@ -70,3 +71,29 @@ def test_guess_functions_touched_extracts_real_function_context():
     assert functions == ["jsg::Ref<Fetcher> Fetcher::deserialize(jsg::Lock& js,"]
     # El segundo hunk no tenia contexto real (git no pudo inferirlo) --
     # nunca se inventa un nombre, se descarta ese hunk.
+
+
+def test_js_engine_lifecycle_marker_detects_real_workerd_signatures():
+    # Firmas REALES extraidas de los 3 diffs de cloudflare/workerd
+    # investigados a mano (ver harness_gen/README.md, "Intento real:
+    # candidato de workerd") -- los 3 resultaron ser bugs de ciclo de
+    # vida de V8/JS, no fuzzeables con libFuzzer.
+    assert _looks_js_engine_lifecycle_bound([
+        "jsg::Ref<Fetcher> Fetcher::deserialize(jsg::Lock& js,"
+    ])
+    assert _looks_js_engine_lifecycle_bound([
+        "void ZlibUtil::CompressionStream<CompressionContext>::emitError("
+    ]) is False  # esta firma puntual no menciona jsg::/v8:: -- confirma que no es un filtro perfecto
+    assert _looks_js_engine_lifecycle_bound([
+        "class Function<Ret(Args...)> {",
+        "Ret operator()(jsg::Lock& jsl, Args... args) {",
+    ])
+
+
+def test_js_engine_lifecycle_marker_does_not_flag_real_fabric_private_chaincode_signature():
+    # Firma REAL de unmarshal_values (fabric-private-chaincode) -- el
+    # candidato que SI resulto ser la forma correcta de bug (parseo de
+    # bytes no confiables), sin jsg::/v8:: en ningun lado.
+    assert _looks_js_engine_lifecycle_bound([
+        "int unmarshal_values("
+    ]) is False
