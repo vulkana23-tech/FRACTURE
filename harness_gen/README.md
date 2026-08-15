@@ -11,12 +11,14 @@ corriendo pero sin modelos descargados).
 Dos generadores, un objetivo distinto cada uno:
 
 - **`generate_harness.py`** (C/libFuzzer) — le das un header real +
-  una función, te devuelve un *borrador* de
-  `LLVMFuzzerTestOneInput`. **Nunca lo compila ni lo corre** — es
-  input directo para revisión humana antes de usarlo. Ya tenía
-  post-procesamiento determinístico documentado contra 2 bugs reales
-  (include en minúscula que no matchea el nombre real del header
-  case-sensitive; `<stdint.h>` faltante).
+  una función, te devuelve un harness de `LLVMFuzzerTestOneInput`. Ya
+  no es solo un borrador: **compila y corre de verdad** (agregado
+  2026-08-16, ver sección propia más abajo) para librerías amalgamadas
+  en 1-2 archivos -- para lo demás, o si no se puede validar,
+  igual sirve como borrador para revisión humana. Post-procesamiento
+  determinístico contra 2 bugs reales (include en minúscula que no
+  matchea el nombre real del header case-sensitive; `<stdint.h>`
+  faltante).
 
 - **`generate_go_harness.py`** (Go nativo, `go test -fuzz`) — la pieza
   nueva de esta ronda. A diferencia del generador de C, este SÍ
@@ -194,9 +196,32 @@ cobertura nueva de verdad (el harness existente de bellperson
 solo cubre `Proof::read` de un proof individual, `read_many` es la
 variante batch/paralela, código distinto).
 
+## `generate_harness.py` (C) -- validación real (2026-08-16)
+
+Mismo criterio que Go/Rust: compila y CORRE de verdad, reintenta con
+el error real del compilador. C no tiene un comando de build universal
+(sin `cargo fuzz build`/`go test -fuzz`) -- cubre el caso real más
+común de los targets de C que ya tiene este proyecto (cJSON, parson,
+zbxjson): una librería chica, amalgamada en (o cerca de) un solo
+archivo `.c` junto a su `.h`. Por default busca un `.c` con el mismo
+nombre base que el header en el mismo directorio del repo clonado; si
+la librería real necesita más archivos (como zbxjson, que necesita
+zbxalgo/zbxstr/zbxcommon/zbxnum además), hay que pasarlos a mano con
+`--extra-source` -- no hay forma barata de resolver dependencias de C
+solo, sin un build system real (mismo límite ya documentado en
+`orchestrator/run_c_fuzzer.py`).
+
+Probado end-to-end contra el ejemplo real ya referenciado en este
+README (`cJSON_Parse`, `DaveGamble/cJSON`): **intento 1 falló con un
+error REAL de compilador** (`memcpy` sin `<string.h>`, "implicit
+function declaration" -- error real en C99+, no un warning), **intento
+2 corrigió solo y compiló+corrió de verdad**. El harness final usa
+`cJSON_Delete` correctamente para liberar memoria, tal cual pedía la
+regla del prompt.
+
 ## Lo que falta (honesto)
 
-- `generate_harness.py` (C) sigue sin loop de validación real (compila
-  y corre) -- sigue siendo un borrador para ojo humano. Se podría
-  extender con el mismo patrón ahora que ya está probado en Go y Rust,
-  no se hizo en esta ronda para no inflar el scope.
+- El generador de C solo cubre el caso de librería amalgamada en 1-2
+  archivos -- no resuelve dependencias reales de un build system (ej.
+  no podría validar `zbxjson` solo, que necesita 5 archivos reales
+  además del propio; ahí `--extra-source` sigue siendo manual).
