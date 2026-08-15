@@ -171,5 +171,14 @@
     "extra_asan_options": "detect_leaks=0",
     "known_finding": true,
     "state": {}
+  },
+  {
+    "id": "bellperson_read_many",
+    "engine": "rust",
+    "crate_dir": "/opt/fracture/build/rust_targets/bellperson",
+    "target": "read_many",
+    "known_finding": false,
+    "state": {},
+    "generated_by": "targets/patch_directed_rust_harness.py (qwen3-coder:30b, 1 intento, ver harness_gen/README.md)"
   }
 ]

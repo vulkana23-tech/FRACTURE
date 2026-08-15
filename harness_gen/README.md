@@ -163,14 +163,40 @@ literal del bloque exacto en vez de un patrón genérico -- con test de
 regresión real (`test_generate_rust_harness.py`, contra un crate Rust
 local en `testdata/`, sin red).
 
+## `targets/patch_directed_rust_harness.py` (2026-08-16)
+
+Cierra el gap de arriba -- conecta `find_patch_directed_candidates.py`
+con `generate_rust_harness.py`. A diferencia de la versión Go (que
+clona el repo fresco), acá `--crate-dir` apunta al clon PERSISTENTE
+real (`build/rust_targets/<crate>`, mismo patrón ya establecido para
+Rust en este proyecto) -- `--repo` se usa solo para escanear
+historial, en un clon temporal aparte.
+
+**Bug real encontrado extendiendo esto a Rust, no solo Go**: el mismo
+problema de `git show` anclando el contexto del hunk al bloque
+contenedor (`impl<E: Engine> Proof<E> {`) en vez de a la firma real
+(`pub fn read_many(proof_bytes: &[u8], ...)`) que ya se había visto
+con C++ (`workerd`/`jsg::Function`) volvió a aparecer, esta vez con
+Rust real (`filecoin-project/bellperson`). Se resolvió agregando un
+segundo lugar donde buscar: además de `functions_touched_guess` (el
+contexto que `git show` elige), también se escanea el cuerpo crudo del
+diff (`diff_excerpt`) por firmas `pub fn` reales -- ahí la firma
+completa SÍ aparece como línea de contexto normal del hunk, aunque
+`git` no la haya elegido como header.
+
+**Resultado real, end-to-end, primer intento**: candidato real
+encontrado (`read_many`, el propio mensaje del commit real
+`361d245447` dice "`proof_bytes` is untrusted, user input"),
+harness generado y VALIDADO (compiló y corrió de verdad) en el primer
+intento -- registrado como target real
+(`bellperson_read_many`, target 20 de `orchestrator/targets.json`),
+cobertura nueva de verdad (el harness existente de bellperson
+solo cubre `Proof::read` de un proof individual, `read_many` es la
+variante batch/paralela, código distinto).
+
 ## Lo que falta (honesto)
 
 - `generate_harness.py` (C) sigue sin loop de validación real (compila
   y corre) -- sigue siendo un borrador para ojo humano. Se podría
   extender con el mismo patrón ahora que ya está probado en Go y Rust,
   no se hizo en esta ronda para no inflar el scope.
-- `generate_rust_harness.py` no tiene un pipeline automático desde
-  `find_patch_directed_candidates.py` como sí tiene Go
-  (`targets/patch_directed_go_harness.py`) -- extensión natural, misma
-  mecánica (extraer `pub fn nombre(` del contexto de un hunk), no se
-  hizo en esta ronda.
