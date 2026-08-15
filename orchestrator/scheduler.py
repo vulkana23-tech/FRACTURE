@@ -25,8 +25,10 @@ de compilacion/ejecucion), y agrega:
     target roto no puede tirar abajo un proceso pensado para correr
     sin supervision.
   - Alertas a disco apenas hay un crash real (orchestrator/alerts/),
-    independiente de que triage/ (todavia sin terminar) lo clasifique
-    despues.
+    y triage automatico al final de cada sweep (triage/triage_alerts.py)
+    -- para cuando un humano abre orchestrator/alerts/ALERTS.md, cada
+    alerta ya tiene su triage.json (severidad real + dedup) al lado,
+    no solo los bytes crudos del crash.
 
 Uso:
   venv/bin/python3 orchestrator/scheduler.py \\
@@ -52,6 +54,9 @@ from datetime import datetime, timezone
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from run_rust_fuzzer import run_rust_fuzzer  # noqa: E402
 from run_go_fuzzer import run_go_fuzzer  # noqa: E402
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "triage"))
+from triage_alerts import triage_all  # noqa: E402
 
 _ROOT = os.path.dirname(os.path.abspath(__file__))
 _REGISTRY_PATH = os.path.join(_ROOT, "targets.json")
@@ -139,12 +144,27 @@ def _write_alert(target: dict, outcome: dict, crashes: list) -> None:
                 fh.write(c.get("content", ""))
         saved_files.append(fname)
 
+    # Texto crudo (stderr para Rust -- ahi vive el reporte real de ASAN;
+    # stdout para Go -- ahi vive el panic real) -- sin esto triage/ no
+    # tiene nada que parsear, solo los bytes crudos del input que
+    # crasheo, no el reporte del sanitizer/panic en si.
+    raw_output = (outcome.get("stderr_tail", "") or "") + (outcome.get("stdout_tail", "") or "")
+    if raw_output.strip():
+        with open(os.path.join(alert_dir, "raw_output.txt"), "w", encoding="utf-8") as fh:
+            fh.write(raw_output)
+
     summary = {
         "target_id": target["id"],
         "engine": target["engine"],
         "detected_at": ts,
         "crash_files": saved_files,
         "known_finding_target": target.get("known_finding", False),
+        # triage/triage_alerts.py lo necesita: un abort/SEGV real puede
+        # no dejar NINGUN texto reconocible en raw_output.txt (ver
+        # docstring de extract_crash_info en classify_sanitizer_crash.py)
+        # -- sin el returncode, ese caso es indistinguible de una
+        # corrida limpia.
+        "returncode": outcome.get("returncode"),
     }
     with open(os.path.join(alert_dir, "summary.json"), "w", encoding="utf-8") as fh:
         json.dump(summary, fh, indent=2, ensure_ascii=False)
@@ -310,6 +330,17 @@ def main() -> None:
         run_sweep(targets, sweep_number, args.cycle_duration, args.max_concurrent, args.cores)
         save_registry(targets, args.registry)
         logging.info("Sweep #%d guardada en %s", sweep_number, args.registry)
+
+        try:
+            triage_stats = triage_all()
+            if triage_stats["newly_triaged"]:
+                logging.info(
+                    "Triage: %d alerta(s) nueva(s) clasificada(s), %d bug(s) unico(s) nuevo(s).",
+                    triage_stats["newly_triaged"], triage_stats["new_unique_bugs"],
+                )
+        except Exception as exc:  # noqa: BLE001 -- triage roto no puede tirar abajo el fuzzing en si
+            logging.error("triage_all() fallo esta sweep (%s: %s) -- sigo, las alertas quedan sin triar.",
+                          type(exc).__name__, exc)
 
         if args.sweeps and sweep_number >= args.sweeps:
             logging.info("Llegue a --sweeps %d, corto (no es el modo 24/7).", args.sweeps)

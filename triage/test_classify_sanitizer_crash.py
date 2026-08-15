@@ -1,0 +1,108 @@
+"""Tests contra fixtures REALES -- cada .txt en testdata/ es la salida
+cruda de un binario de verdad compilado con clang -fsanitize=... (o
+rustc para el panic de Rust) y corrido hasta crashear, no texto escrito
+a mano. Ver triage/README.md para como se generaron."""
+
+import os
+
+from classify_sanitizer_crash import extract_crash_info
+
+_TESTDATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "testdata")
+
+
+def _load(fname: str) -> str:
+    with open(os.path.join(_TESTDATA, fname), "r", encoding="utf-8", errors="ignore") as fh:
+        return fh.read()
+
+
+def test_asan_heap_buffer_overflow_is_high_severity():
+    info = extract_crash_info(_load("asan_heap_buffer_overflow_real.txt"))
+    assert info is not None
+    assert info["sanitizer"] == "AddressSanitizer"
+    assert info["bug_type"] == "heap-buffer-overflow"
+    assert info["severity"] == "high"
+    assert info["top_frame"] is not None
+    assert "main" in info["top_frame"]
+    assert "asan_heap_overflow.c:8" in info["top_frame"]
+    # Nunca un frame de plomeria del sanitizer/libc como top_frame.
+    assert "__asan_" not in info["top_frame"]
+    assert "vsnprintf" not in info["top_frame"]
+
+
+def test_asan_use_after_free_is_high_severity_and_skips_interceptor_frames():
+    info = extract_crash_info(_load("asan_use_after_free_real.txt"))
+    assert info is not None
+    assert info["bug_type"] == "heap-use-after-free"
+    assert info["severity"] == "high"
+    # printf_common/printf son plomeria del interceptor de ASAN -- el
+    # primer frame real tiene que ser `main`, no eso.
+    assert info["top_frame"].startswith("main")
+
+
+def test_ubsan_signed_overflow_is_needs_review_not_high():
+    info = extract_crash_info(_load("ubsan_signed_overflow_real.txt"))
+    assert info is not None
+    assert info["sanitizer"] == "UndefinedBehaviorSanitizer"
+    assert "overflow" in info["bug_type"].lower()
+    # UB real, pero no se puede afirmar explotabilidad solo con esto --
+    # a diferencia de heap-buffer-overflow, que si es señal fuerte.
+    assert info["severity"] == "needs_review"
+
+
+def test_rust_panic_index_out_of_bounds_is_high_severity():
+    info = extract_crash_info(_load("rust_panic_index_oob_real.txt"))
+    assert info is not None
+    assert info["sanitizer"] is None
+    assert info["bug_type"] == "rust-panic"
+    assert "index out of bounds" in info["message"]
+    assert info["severity"] == "high"
+    # core::panicking/__rustc:: son plomeria interna -- el primer frame
+    # real tiene que ser la funcion del propio target.
+    assert "parse_len_prefixed" in info["top_frame"]
+    assert "core::panicking" not in info["top_frame"]
+    joined = " ".join(info["target_frames"])
+    assert "rust_panic::main" in joined
+
+
+def test_controlled_abort_without_returncode_hint_is_indistinguishable_from_clean():
+    # Sin el returncode real, un abort() que no imprime nada reconocible
+    # (el texto "Aborted (core dumped)" es del job control de bash, NO
+    # esta en lo que subprocess.run() captura de verdad -- confirmado
+    # generando este fixture con `> archivo 2>&1` real) es indistinguible
+    # de una corrida limpia con solo el texto.
+    info = extract_crash_info(_load("controlled_abort_no_sanitizer_real.txt"))
+    assert info is None
+
+
+def test_controlled_abort_with_returncode_hint_is_needs_review_not_high():
+    # 134 = 128 + SIGABRT(6), el exit code real que devolvio el binario
+    # de prueba (confirmado en vivo, no supuesto).
+    info = extract_crash_info(_load("controlled_abort_no_sanitizer_real.txt"), returncode=134)
+    assert info is not None
+    # Sin ERROR: AddressSanitizer/UBSAN/panic real -- solo un abort()
+    # explicito del propio programa, mismo criterio que un panic() con
+    # mensaje propio en classify_go_panic.py: asercion intencional, no
+    # necesariamente un bug de memoria.
+    assert info["sanitizer"] is None
+    assert info["severity"] == "needs_review"
+
+
+def test_returns_none_for_clean_output():
+    clean = "running 1 test\ntest fuzz_target::run ... ok\n\ntest result: ok. 1 passed\n"
+    assert extract_crash_info(clean) is None
+
+
+def test_stack_hash_is_deterministic_and_ignores_addresses():
+    fixture = _load("asan_heap_buffer_overflow_real.txt")
+    info1 = extract_crash_info(fixture)
+    # Mismo bug, direcciones de memoria distintas (simula ASLR entre
+    # corridas) -- el hash de dedup NO puede cambiar por esto solo.
+    fixture_diff_addresses = fixture.replace("0x502000000020", "0x999999999999")
+    info2 = extract_crash_info(fixture_diff_addresses)
+    assert info1["stack_hash"] == info2["stack_hash"]
+
+
+def test_different_bug_types_get_different_hashes():
+    hbo = extract_crash_info(_load("asan_heap_buffer_overflow_real.txt"))
+    uaf = extract_crash_info(_load("asan_use_after_free_real.txt"))
+    assert hbo["stack_hash"] != uaf["stack_hash"]

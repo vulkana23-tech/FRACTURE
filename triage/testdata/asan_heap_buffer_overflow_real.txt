@@ -1,0 +1,51 @@
+=================================================================
+==1712235==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x502000000020 at pc 0x60426eb21c4f bp 0x7ffef6a1fa20 sp 0x7ffef6a1f1c0
+WRITE of size 66 at 0x502000000020 thread T0
+    #0 0x60426eb21c4e in vsnprintf (/root/.claude/jobs/b5bac52f/tmp/sanitizer_fixtures/asan_heap_overflow+0x50c4e) (BuildId: 0a7985973f46eee93f061c0aae683dcf538f76bf)
+    #1 0x60426eb23401 in snprintf (/root/.claude/jobs/b5bac52f/tmp/sanitizer_fixtures/asan_heap_overflow+0x52401) (BuildId: 0a7985973f46eee93f061c0aae683dcf538f76bf)
+    #2 0x60426ebd579b in main /root/.claude/jobs/b5bac52f/tmp/sanitizer_fixtures/asan_heap_overflow.c:8:5
+    #3 0x76fe51a2a1c9  (/lib/x86_64-linux-gnu/libc.so.6+0x2a1c9) (BuildId: 328820b908de8ea1ef79afa8995e302e819163d7)
+    #4 0x76fe51a2a28a in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2a28a) (BuildId: 328820b908de8ea1ef79afa8995e302e819163d7)
+    #5 0x60426eafc344 in _start (/root/.claude/jobs/b5bac52f/tmp/sanitizer_fixtures/asan_heap_overflow+0x2b344) (BuildId: 0a7985973f46eee93f061c0aae683dcf538f76bf)
+
+0x502000000020 is located 0 bytes after 16-byte region [0x502000000010,0x502000000020)
+allocated by thread T0 here:
+    #0 0x60426eb97193 in malloc (/root/.claude/jobs/b5bac52f/tmp/sanitizer_fixtures/asan_heap_overflow+0xc6193) (BuildId: 0a7985973f46eee93f061c0aae683dcf538f76bf)
+    #1 0x60426ebd574f in main /root/.claude/jobs/b5bac52f/tmp/sanitizer_fixtures/asan_heap_overflow.c:6:25
+    #2 0x76fe51a2a1c9  (/lib/x86_64-linux-gnu/libc.so.6+0x2a1c9) (BuildId: 328820b908de8ea1ef79afa8995e302e819163d7)
+    #3 0x76fe51a2a28a in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2a28a) (BuildId: 328820b908de8ea1ef79afa8995e302e819163d7)
+    #4 0x60426eafc344 in _start (/root/.claude/jobs/b5bac52f/tmp/sanitizer_fixtures/asan_heap_overflow+0x2b344) (BuildId: 0a7985973f46eee93f061c0aae683dcf538f76bf)
+
+SUMMARY: AddressSanitizer: heap-buffer-overflow (/root/.claude/jobs/b5bac52f/tmp/sanitizer_fixtures/asan_heap_overflow+0x50c4e) (BuildId: 0a7985973f46eee93f061c0aae683dcf538f76bf) in vsnprintf
+Shadow bytes around the buggy address:
+  0x501ffffffd80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x501ffffffe00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x501ffffffe80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x501fffffff00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x501fffffff80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+=>0x502000000000: fa fa 00 00[fa]fa fa fa fa fa fa fa fa fa fa fa
+  0x502000000080: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x502000000100: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x502000000180: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x502000000200: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x502000000280: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==1712235==ABORTING

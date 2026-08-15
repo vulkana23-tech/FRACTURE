@@ -1,0 +1,58 @@
+=================================================================
+==1712792==ERROR: AddressSanitizer: heap-use-after-free on address 0x503000000040 at pc 0x64091fc0d548 bp 0x7ffd249f43e0 sp 0x7ffd249f3b70
+READ of size 2 at 0x503000000040 thread T0
+    #0 0x64091fc0d547 in printf_common(void*, char const*, __va_list_tag*) asan_interceptors.cpp.o
+    #1 0x64091fc0efbd in printf (/root/.claude/jobs/b5bac52f/tmp/sanitizer_fixtures/asan_use_after_free+0x51fbd) (BuildId: 1b307f5607c704e257d40ce0a25c419b75c515e8)
+    #2 0x64091fcc17a8 in main /root/.claude/jobs/b5bac52f/tmp/sanitizer_fixtures/asan_use_after_free.c:9:5
+    #3 0x75815e62a1c9  (/lib/x86_64-linux-gnu/libc.so.6+0x2a1c9) (BuildId: 328820b908de8ea1ef79afa8995e302e819163d7)
+    #4 0x75815e62a28a in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2a28a) (BuildId: 328820b908de8ea1ef79afa8995e302e819163d7)
+    #5 0x64091fbe8344 in _start (/root/.claude/jobs/b5bac52f/tmp/sanitizer_fixtures/asan_use_after_free+0x2b344) (BuildId: 1b307f5607c704e257d40ce0a25c419b75c515e8)
+
+0x503000000040 is located 0 bytes inside of 32-byte region [0x503000000040,0x503000000060)
+freed by thread T0 here:
+    #0 0x64091fc82efa in free (/root/.claude/jobs/b5bac52f/tmp/sanitizer_fixtures/asan_use_after_free+0xc5efa) (BuildId: 1b307f5607c704e257d40ce0a25c419b75c515e8)
+    #1 0x64091fcc1796 in main /root/.claude/jobs/b5bac52f/tmp/sanitizer_fixtures/asan_use_after_free.c:8:5
+    #2 0x75815e62a1c9  (/lib/x86_64-linux-gnu/libc.so.6+0x2a1c9) (BuildId: 328820b908de8ea1ef79afa8995e302e819163d7)
+    #3 0x75815e62a28a in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2a28a) (BuildId: 328820b908de8ea1ef79afa8995e302e819163d7)
+    #4 0x64091fbe8344 in _start (/root/.claude/jobs/b5bac52f/tmp/sanitizer_fixtures/asan_use_after_free+0x2b344) (BuildId: 1b307f5607c704e257d40ce0a25c419b75c515e8)
+
+previously allocated by thread T0 here:
+    #0 0x64091fc83193 in malloc (/root/.claude/jobs/b5bac52f/tmp/sanitizer_fixtures/asan_use_after_free+0xc6193) (BuildId: 1b307f5607c704e257d40ce0a25c419b75c515e8)
+    #1 0x64091fcc174f in main /root/.claude/jobs/b5bac52f/tmp/sanitizer_fixtures/asan_use_after_free.c:6:25
+    #2 0x75815e62a1c9  (/lib/x86_64-linux-gnu/libc.so.6+0x2a1c9) (BuildId: 328820b908de8ea1ef79afa8995e302e819163d7)
+    #3 0x75815e62a28a in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x2a28a) (BuildId: 328820b908de8ea1ef79afa8995e302e819163d7)
+    #4 0x64091fbe8344 in _start (/root/.claude/jobs/b5bac52f/tmp/sanitizer_fixtures/asan_use_after_free+0x2b344) (BuildId: 1b307f5607c704e257d40ce0a25c419b75c515e8)
+
+SUMMARY: AddressSanitizer: heap-use-after-free asan_interceptors.cpp.o in printf_common(void*, char const*, __va_list_tag*)
+Shadow bytes around the buggy address:
+  0x502ffffffd80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x502ffffffe00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x502ffffffe80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x502fffffff00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x502fffffff80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+=>0x503000000000: fa fa 00 00 00 fa fa fa[fd]fd fd fd fa fa fa fa
+  0x503000000080: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x503000000100: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x503000000180: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x503000000200: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x503000000280: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==1712792==ABORTING
