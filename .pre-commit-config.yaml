@@ -1,0 +1,10 @@
+repos:
+  - repo: local
+    hooks:
+      - id: semgrep-insecure-default-secret
+        name: semgrep (insecure-default-secret)
+        entry: >-
+          semgrep --config security/semgrep_rules/insecure_default_secret.yml
+          --error --metrics=off --quiet
+        language: system
+        pass_filenames: true
