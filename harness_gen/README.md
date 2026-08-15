@@ -121,15 +121,56 @@ firma**: no es candidato de `harness_gen/` tal como está hoy -- ver
 (chequear `jsg::Lock`/`v8::` en la firma antes de siquiera intentar
 generar).
 
+## `generate_rust_harness.py` (2026-08-16)
+
+Mismo criterio que `generate_go_harness.py` (genera con qwen3-coder,
+compila y CORRE de verdad, reintenta con el error real del
+compilador) pero para cargo-fuzz. A diferencia de Go, los crates de
+Rust en este proyecto son clones PERSISTENTES bajo
+`build/rust_targets/` (mismo patrón ya establecido por
+`run_rust_fuzzer.py`) -- `--crate-dir` apunta a un clon YA HECHO,
+nunca clona nada solo. Reusa `run_rust_fuzzer()` de
+`orchestrator/run_rust_fuzzer.py` directo para la validación real (el
+mismo código que después corre esto en producción).
+
+Dos casos reales cubiertos y probados en vivo:
+- **Crate sin `fuzz/` todavía** -- corre `cargo +nightly fuzz init`
+  solo (bootstrap real, confirmado que arma el
+  `[dependencies.<crate>] path = ".."` correcto), y borra el target
+  placeholder (`fuzz_target_1`, sin fuzzing real adentro) que la
+  herramienta genera sola.
+- **Crate con `fuzz/` ya existente** (el caso real de
+  `build/rust_targets/tofn` y el resto de los targets ya en
+  producción) -- agrega un nuevo `[[bin]]` al `fuzz/Cargo.toml`
+  existente sin tocar los targets ya registrados. Confirmado en vivo
+  agregando un segundo target a un crate que ya tenía uno.
+
+Probado end-to-end contra un crate real y mínimo (`parse_len_prefixed`,
+mismo patrón de bug de longitud-mal-declarada que ya se usó en otros
+fixtures de este proyecto): primer intento con la versión inicial del
+código dio un build roto (retry real, no simulado); el segundo,
+después de recibir el error real del compilador, compiló y corrió.
+
+**Bug real encontrado y corregido en el camino**: la limpieza del
+target placeholder usaba un regex no-greedy genérico
+(`.*?\n\n?`) que paraba de matchear demasiado pronto, dejando
+`test = false`/`doc = false`/`bench = false` huérfanos (sin su
+`[[bin]]`/`name`/`path`) en el `fuzz/Cargo.toml` real -- TOML mal
+formado que `cargo` toleró esta vez pero no había garantía de que
+siguiera tolerándolo. Como el bloque que genera `cargo fuzz init` es
+determinístico (confirmado corriéndolo en vivo), se cambió a un match
+literal del bloque exacto en vez de un patrón genérico -- con test de
+regresión real (`test_generate_rust_harness.py`, contra un crate Rust
+local en `testdata/`, sin red).
+
 ## Lo que falta (honesto)
 
-- No hay generador para Rust/cargo-fuzz todavía (el otro engine real
-  de `orchestrator/`) -- el patrón de "generar + compilar de verdad +
-  reintentar contra el error real" de `generate_go_harness.py` se
-  traslada directo, pero cargo-fuzz necesita scaffolding de crate
-  (`cargo fuzz init`/`fuzz/Cargo.toml`) que Go nativo no, así que no es
-  una copia mecánica del mismo código.
 - `generate_harness.py` (C) sigue sin loop de validación real (compila
   y corre) -- sigue siendo un borrador para ojo humano. Se podría
-  extender con el mismo patrón ahora que ya está probado en Go, no se
-  hizo en esta ronda para no inflar el scope.
+  extender con el mismo patrón ahora que ya está probado en Go y Rust,
+  no se hizo en esta ronda para no inflar el scope.
+- `generate_rust_harness.py` no tiene un pipeline automático desde
+  `find_patch_directed_candidates.py` como sí tiene Go
+  (`targets/patch_directed_go_harness.py`) -- extensión natural, misma
+  mecánica (extraer `pub fn nombre(` del contexto de un hunk), no se
+  hizo en esta ronda.
