@@ -109,6 +109,47 @@ venv/bin/python3 targets/find_patch_directed_candidates.py \
 venv/bin/python3 -m pytest targets/ -v
 ```
 
+## `patch_directed_go_harness.py` -- pipeline automático (2026-08-15)
+
+Conecta `find_patch_directed_candidates.py` con
+`harness_gen/generate_go_harness.py` sin copiar/pegar nombres de
+función a mano: descarta commits marcados como ciclo de vida V8/JS,
+extrae nombres de función Go reales del contexto de cada hunk
+(`func (recv Type) Nombre(...)`), prioriza los que mencionan
+`[]byte`/`string` en la firma (superficie de bytes real), y llama a
+`generate_and_validate_go_harness` para el primer candidato que
+compila y corre de verdad.
+
+**Resultado real contra `hyperledger/fabric`** (no los satélites más
+chicos ya explorados -- el repo principal del peer, mucho más activo):
+encontró 4 commits reales de seguridad con candidatos Go reales
+(`Push` en `gossip/state/payloads_buffer.go`, `HandleTransaction` en
+`core/chaincode/handler.go` -- literalmente "Recover from panic...to
+prevent peer crash" --, `directMessage` en `gossip/state/state.go`).
+**Primer intento, sin el filtro de `[]byte`/`string` todavía**: generó
+y validó un harness real para `Ready()` -- compiló y corrió de
+verdad, pero `Ready()` no toma NINGÚN parámetro relevante (solo
+devuelve un canal), así que el harness resultante fuzzeaba un
+`uint64` arbitrario sin ninguna superficie de bytes no confiables que
+ejercitar. **Se descartó ese harness a propósito** (nunca se registró
+en `orchestrator/targets.json` -- hubiera gastado cores reales en algo
+sin valor) y se agregó la priorización por `[]byte`/`string` en la
+firma.
+
+**Limitación real, honesta, encontrada re-analizando los 4 candidatos**:
+ni `Push(payload *proto.Payload)`, ni `HandleTransaction(msg
+*pb.ChaincodeMessage, ...)`, ni `directMessage(msg
+protoext.ReceivedMessage)` toman `[]byte`/`string` tampoco -- todos
+reciben structs YA deserializados. El límite entre bytes crudos y
+struct (el `proto.Unmarshal` real) casi nunca está en la MISMA función
+que el commit de seguridad tocó -- está en código generado o en un
+wrapper, en otro lugar del repo. Encontrar el punto de entrada real de
+bytes crudos cerca de un commit de seguridad seguiría necesitando
+criterio humano (exactamente lo que se hizo a mano para
+`unmarshal_values`) -- este pipeline automatiza la mecánica
+(generar+validar) pero no reemplaza esa lectura real del código
+cuando el candidato obvio no alcanza.
+
 ## Nota sobre los READMEs de este repo
 
 Dos de dos READMEs revisados a fondo esta ronda (`harness_gen/`, este)
@@ -149,12 +190,10 @@ cero -- leer el código primero.
   confiar en el contexto que `git show` ya infiere gratis -- no se
   hizo en esta ronda, la señal actual (barata, 5/8 reales) sigue
   siendo mejor que nada, con este límite documentado.
-- `find_patch_directed_candidates.py` no está conectado todavía a
-  `harness_gen/` de forma automática (los candidatos reales que
-  encontró se pasaron a mano a `generate_go_harness.py`/
-  `generate_harness.py`) -- ambos ya toman `--repo`/función objetivo
-  por separado, conectarlos directo (que el output de uno alimente al
-  otro sin copiar/pegar a mano) es una extensión natural, no se hizo
-  en esta ronda porque `generate_go_harness.py` es para Go y el primer
-  candidato real que se investigó a fondo era C++ (`generate_harness.py`, que todavía
-  no tiene loop de validación real -- ver `harness_gen/README.md`).
+- ~~`find_patch_directed_candidates.py` no está conectado todavía a
+  `harness_gen/`~~ **cerrado (2026-08-15)**: `patch_directed_go_harness.py`
+  conecta ambos para candidatos Go, probado en vivo contra
+  `hyperledger/fabric` -- ver arriba. Solo cubre Go (`generate_go_harness.py`);
+  no hay equivalente para C/C++ (`generate_harness.py` sigue sin loop
+  de validación real, ver `harness_gen/README.md`) ni para Rust
+  (`harness_gen/` tampoco tiene generador de Rust todavía).
