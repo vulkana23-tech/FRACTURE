@@ -141,12 +141,30 @@ recomendación genérica sin chequear si aplicaba de verdad.
   más" de "esta seed particular tuvo mala suerte 3 veces seguidas".
   Suficiente para no gastar los mismos cores infinitamente en algo
   chato, no es ciencia exacta.
-- **No hay engine para JVM (Jazzer) ni para fuzzing binario
-  (QEMU mode de AFL++/Frida, para targets closed-source sin fuente)**
-  -- quedó fuera de esta ronda a propósito: JVM necesita levantar
-  Jazzer + un target Java real para probar en vivo (no hay ninguno en
-  el registro todavía, a diferencia de C que ya tenía 2 binarios reales
-  compilados esperando), y QEMU-mode es un toolchain aparte (requiere
-  compilar AFL++ con soporte QEMU, más pesado que agregar un `elif`
-  como se hizo acá con C). Mejor dejarlo documentado como pendiente
-  real que improvisar un engine sin nada real para validarlo en vivo.
+- ~~No hay engine para JVM (Jazzer)~~ **cerrado (2026-08-16)**:
+  `run_jvm_fuzzer.py` (mismo patrón que `run_c_fuzzer.py`, Jazzer
+  envuelve libFuzzer -- confirmado en vivo que imprime el mismo
+  formato real de `cov:`/`Done N runs`). JDK 21 + Jazzer standalone
+  0.30.0 instalados. Primer target real:
+  `fabric_chaincode_java_parseattributes`
+  (`ClientIdentity.parseAttributes`, fabric-chaincode-java -- mismo
+  patrón real ya fuzzeado en Go/C++ por este proyecto: atributos de
+  identidad codificados en JSON dentro de una extensión de certificado
+  X.509). Encontró **3+ tipos distintos de excepciones reales sin
+  capturar** en menos de 20s de fuzzing real -- ver
+  `findings/2026-08-16_fabric-chaincode-java_parseattributes_uncaught_exceptions.md`.
+  21er target del registro.
+
+  Dos bugs propios encontrados construyendo esto: un flag con doble
+  guion en vez de uno solo (`--artifact_prefix` vs `-artifact_prefix`)
+  que hacía fallar la corrida real en silencio (quedó escondido porque
+  ya había un crash viejo de la investigación manual en `artifact_dir`,
+  documentado en el finding); y el log de Jazzer, mucho más verboso
+  que ASAN/Rust (una línea por CADA clase instrumentada), enterraba el
+  crash real fuera de la ventana de recorte de 3000 caracteres que
+  alcanzaba para los demás engines -- subida a 50000 solo para JVM.
+
+- **Sigue sin engine para fuzzing binario (QEMU mode de AFL++/Frida,
+  para targets closed-source sin fuente)** -- toolchain aparte
+  (requiere compilar AFL++ con soporte QEMU), más pesado que agregar
+  un `elif` nuevo. No se hizo en esta ronda.

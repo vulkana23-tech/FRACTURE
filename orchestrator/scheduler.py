@@ -55,6 +55,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from run_rust_fuzzer import run_rust_fuzzer  # noqa: E402
 from run_go_fuzzer import run_go_fuzzer  # noqa: E402
 from run_c_fuzzer import run_c_fuzzer  # noqa: E402
+from run_jvm_fuzzer import run_jvm_fuzzer  # noqa: E402
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "triage"))
 from triage_alerts import triage_all  # noqa: E402
@@ -246,6 +247,16 @@ def run_one_cycle(target: dict, duration_seconds: int, workers: int) -> dict:
             workers=workers,
             extra_asan_options=target.get("extra_asan_options", ""),
         )
+    elif target["engine"] == "jvm":
+        outcome = run_jvm_fuzzer(
+            classes_dir=target["classes_dir"],
+            lib_dir=target["lib_dir"],
+            target_class=target["target_class"],
+            corpus_dir=target["corpus_dir"],
+            artifact_dir=target["artifact_dir"],
+            duration_seconds=duration_seconds,
+            workers=workers,
+        )
     else:
         raise ValueError(f"engine desconocido: {target['engine']!r}")
 
@@ -262,10 +273,11 @@ def _update_state_after_cycle(target: dict, outcome: dict) -> None:
     state["cycles_completed"] = state.get("cycles_completed", 0) + 1
     state["last_cycle_at"] = _now_iso()
 
-    if target["engine"] in ("rust", "c"):
-        # Mismo runtime de libFuzzer para ambos (compiler-rt) -- el
-        # formato de las lineas "cov:"/"Done N runs" es identico sea
-        # cual sea el lenguaje que se compilo, no es especifico de Rust.
+    if target["engine"] in ("rust", "c", "jvm"):
+        # Mismo runtime de libFuzzer para los tres (Jazzer envuelve
+        # libFuzzer para JVM, confirmado en vivo -- imprime las mismas
+        # lineas reales "cov:"/"Done N runs") -- el formato no es
+        # especifico de Rust/compiler-rt, es el mismo motor.
         total_runs = outcome.get("total_runs", 0)
         cov = _parse_rust_coverage(outcome)
         prev_cov = state.get("last_cov")

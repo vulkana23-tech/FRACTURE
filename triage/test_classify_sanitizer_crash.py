@@ -139,3 +139,48 @@ def test_different_bug_types_get_different_hashes():
     hbo = extract_crash_info(_load("asan_heap_buffer_overflow_real.txt"))
     uaf = extract_crash_info(_load("asan_use_after_free_real.txt"))
     assert hbo["stack_hash"] != uaf["stack_hash"]
+
+
+def test_jazzer_java_exception_is_real_and_medium_severity():
+    # Fixture real: crash real encontrado con Jazzer en el primer
+    # target JVM de este proyecto (fabric-chaincode-java, ver
+    # findings/2026-08-16_fabric-chaincode-java_parseattributes_uncaught_exception.md).
+    # Java es memory-safe -- nunca "high" (eso es para corrupcion de
+    # memoria real en C/Rust), pero SI es un bug de robustez real
+    # (excepcion no declarada que la funcion de parseo no atrapa).
+    info = extract_crash_info(_load("jazzer_illegalargument_asn1_real.txt"))
+    assert info is not None
+    assert info["sanitizer"] is None
+    assert info["bug_type"] == "java-exception:java.lang.IllegalArgumentException"
+    assert info["severity"] == "medium"
+    # ClientIdentity.parseAttributes tiene que quedar en los frames
+    # reales -- es el codigo real del target, no plomeria del JDK.
+    joined = " ".join(info["target_frames"])
+    assert "ClientIdentity.parseAttributes" in joined
+    # java.base/jdk.internal.reflect es plomeria del JDK -- nunca top_frame.
+    assert "jdk.internal.reflect" not in info["top_frame"]
+
+
+def test_jazzer_frames_scoped_to_real_crash_not_mixed_with_handled_exception_noise():
+    # Regresion real (2026-08-16, corrida real con 18 workers de Jazzer
+    # en paralelo): Jazzer loguea el stack trace de CUALQUIER excepcion
+    # que observa via instrumentacion, incluidas las que el harness ya
+    # atrapa como esperadas (org.json.JSONException, muchas veces por
+    # corrida) -- sin acotar por "DEDUP_TOKEN:", esos frames de ruido
+    # se mezclaban con los del crash real que si se propago.
+    noisy_text = (
+        "\tat org.json.JSONTokener.syntaxError(JSONTokener.java:581)\n"
+        "\tat org.json.JSONObject.<init>(JSONObject.java:221)\n"
+        "\n"
+        "== Java Exception: java.lang.IllegalArgumentException: invalid pad bits detected\n"
+        "\tat org.bouncycastle.asn1.ASN1BitString.createPrimitive(Unknown Source)\n"
+        "\tat org.hyperledger.fabric.contract.ClientIdentity.parseAttributes(ClientIdentity.java:111)\n"
+        "DEDUP_TOKEN: abc123\n"
+        "== libFuzzer crashing input ==\n"
+    )
+    info = extract_crash_info(noisy_text)
+    assert info is not None
+    joined = " ".join(info["target_frames"])
+    assert "JSONTokener" not in joined
+    assert "JSONObject" not in joined
+    assert "ClientIdentity.parseAttributes" in joined

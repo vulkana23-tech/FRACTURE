@@ -180,5 +180,16 @@
     "known_finding": false,
     "state": {},
     "generated_by": "targets/patch_directed_rust_harness.py (qwen3-coder:30b, 1 intento, ver harness_gen/README.md)"
+  },
+  {
+    "id": "fabric_chaincode_java_parseattributes",
+    "engine": "jvm",
+    "classes_dir": "/opt/fracture/build/jvm_targets/fabric_chaincode_java/classes",
+    "lib_dir": "/opt/fracture/build/jvm_targets/fabric_chaincode_java/lib",
+    "target_class": "FuzzParseAttributes",
+    "corpus_dir": "/opt/fracture/build/jvm_targets/fabric_chaincode_java/corpus",
+    "artifact_dir": "/opt/fracture/build/jvm_targets/fabric_chaincode_java/crashes",
+    "known_finding": true,
+    "state": {}
   }
 ]

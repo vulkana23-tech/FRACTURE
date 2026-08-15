@@ -9,11 +9,24 @@ antes de que un humano revise nada.
 - `classify_go_panic.py` — clasifica panics de `go test -fuzz` (ya
   existía).
 - `classify_sanitizer_crash.py` — la pieza que faltaba: ASAN, UBSAN,
-  MemorySanitizer, LeakSanitizer y panics de Rust (cargo-fuzz), mismo
+  MemorySanitizer, LeakSanitizer, panics de Rust (cargo-fuzz) y
+  excepciones Java sin capturar (Jazzer, agregado 2026-08-16), mismo
   criterio que el de Go (filtra frames de plomeria del
-  sanitizer/libc/std, hash de dedup a partir de tipo de bug + frames
-  reales, nunca de direcciones de memoria crudas porque ASLR las
-  cambia entre corridas del MISMO bug).
+  sanitizer/libc/std/JDK, hash de dedup a partir de tipo de bug +
+  frames reales, nunca de direcciones de memoria crudas porque ASLR
+  las cambia entre corridas del MISMO bug). Java nunca clasifica
+  "high" -- memory-safe, el techo real es "medium" (rompe el manejo
+  de errores declarado, pero no corrompe memoria).
+
+  **Bug real encontrado en producción armando el primer target JVM**:
+  Jazzer loguea el stack trace de CUALQUIER excepción que observa vía
+  su instrumentación de bytecode, incluidas las que el harness ya
+  atrapa como esperadas -- escanear el texto completo del output
+  mezclaba esos frames de ruido con los del crash real que sí se
+  propagó. Corregido acotando la extracción de frames a la ventana
+  real entre `== Java Exception:` y `DEDUP_TOKEN:` (el delimitador
+  real que Jazzer imprime por cada bloque de excepción) -- con test de
+  regresión real.
 - `triage_alerts.py` — conecta lo anterior con
   `orchestrator/alerts/` (lo que escribe `scheduler.py` en cuanto hay
   un crash real): clasifica cada alerta sin triar, escribe

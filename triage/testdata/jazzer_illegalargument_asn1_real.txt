@@ -1,0 +1,14 @@
+== Java Exception: java.lang.IllegalArgumentException: invalid pad bits detected
+	at org.bouncycastle.asn1.ASN1BitString.createPrimitive(Unknown Source)
+	at org.bouncycastle.asn1.DLBitStringParser.getLoadedObject(Unknown Source)
+	at org.bouncycastle.asn1.ASN1StreamParser.readVector(Unknown Source)
+	at org.bouncycastle.asn1.ASN1StreamParser.loadTaggedIL(Unknown Source)
+	at org.bouncycastle.asn1.ASN1InputStream.readObject(Unknown Source)
+	at org.hyperledger.fabric.contract.ClientIdentity.parseAttributes(ClientIdentity.java:111)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at FuzzParseAttributes.fuzzerTestOneInput(FuzzParseAttributes.java:60)
+DEDUP_TOKEN: 60c1f1ec8c07014f
+== libFuzzer crashing input ==
+reproducer_path='.'; Java reproducer written to ./Crash_c69bae22b2523475f4cd74abad0cb2612432d775.java
+

@@ -48,6 +48,13 @@ _UBSAN_RUNTIME_ERROR_RE = re.compile(
 _RUST_PANIC_RE = re.compile(
     r"^thread '.*?'(?: \(\d+\))? panicked at ([^\n]+):\n(.+)$", re.MULTILINE
 )
+# "== Java Exception: java.lang.IllegalArgumentException: invalid pad
+# bits detected" -- formato real de Jazzer (confirmado en vivo,
+# fabric-chaincode-java/ClientIdentity.parseAttributes, 2026-08-16),
+# envuelve libFuzzer igual que ASAN/Rust pero para JVM.
+_JAVA_EXCEPTION_RE = re.compile(
+    r"^== Java Exception: (\S+): (.+)$", re.MULTILINE
+)
 
 # Frame con ubicacion real de codigo fuente: "#N 0xADDR in FUNC PATH:LINE[:COL]"
 # -- a diferencia de "#N 0xADDR in FUNC (MODULE+0xOFFSET)" (sin ':LINE'
@@ -69,6 +76,16 @@ _RUST_INTERNAL_FUNC_PREFIXES = (
     "__rustc::", "core::panicking", "core::ops::function", "core::result",
     "core::option", "std::rt::", "std::panicking", "std::sys::",
 )
+# Frame real de Jazzer/Java: "\tat pkg.Clase.metodo(Archivo.java:N)" o
+# "\tat pkg.Clase.metodo(Unknown Source)" (sin simbolos de debug, ej.
+# librerias de terceros compiladas sin -g -- BouncyCastle real las
+# tiene asi).
+_JAVA_FRAME_RE = re.compile(
+    r"^\s*at ([\w.$<>]+)\(([^)]*)\)\s*$", re.MULTILINE
+)
+_JAVA_INTERNAL_FUNC_PREFIXES = (
+    "java.base/", "jdk.internal.", "java.lang.reflect.",
+)
 
 _HIGH_SEVERITY_ASAN_TYPES = {
     "heap-buffer-overflow", "heap-use-after-free", "use-after-free",
@@ -84,6 +101,7 @@ _HIGH_SEVERITY_UBSAN_MARKERS = ("null pointer", "misaligned address", "out of bo
 
 _HIGH_SEVERITY_RUST_PANIC_MARKERS = ("index out of bounds", "slice index", "out of range")
 _MEDIUM_SEVERITY_RUST_PANIC_MARKERS = ("attempt to", "unwrap()", "expect(")
+
 
 
 def _extract_c_frames(text: str) -> List[str]:
@@ -104,6 +122,28 @@ def _extract_rust_frames(text: str) -> List[str]:
             continue
         frames.append(f"{func} ({m.group('path')}:{m.group('line')})")
     return frames
+
+
+def _extract_java_frames(text: str) -> List[str]:
+    frames = []
+    for func, location in _JAVA_FRAME_RE.findall(text):
+        if any(func.startswith(p) for p in _JAVA_INTERNAL_FUNC_PREFIXES):
+            continue
+        frames.append(f"{func} ({location})")
+    return frames
+
+
+def _java_exception_severity(exception_type: str) -> str:
+    # Java es memory-safe -- la JVM nunca deja corromper memoria real
+    # por una excepcion, asi que el techo real es "medium", nunca
+    # "high" (reservado para corrupcion de memoria real en C/Rust/etc).
+    # Una excepcion sin capturar que se propaga fuera de una funcion de
+    # parseo SI es un bug de robustez real (input no confiable rompe
+    # el manejo de errores declarado -- exactamente el caso real de
+    # ClientIdentity.parseAttributes, que declara `throws IOException`/
+    # atrapa JSONException pero no IllegalArgumentException real de
+    # BouncyCastle).
+    return "medium"
 
 
 def _stack_hash(*parts: str) -> str:
@@ -231,6 +271,34 @@ def extract_crash_info(raw_text: str, returncode: Optional[int] = None) -> Optio
             "top_frame": frames[0] if frames else location,
             "severity": _rust_panic_severity(message),
             "stack_hash": _stack_hash("rust-panic", message, *frames[:3]),
+        }
+
+    m = _JAVA_EXCEPTION_RE.search(raw_text)
+    if m:
+        exception_type, message = m.groups()
+        message = message.strip()
+        # Bug real encontrado en produccion (2026-08-16, corriendo esto
+        # de verdad con 18 workers en paralelo via Jazzer): Jazzer loguea
+        # el stack trace de CUALQUIER excepcion que observa via su
+        # instrumentacion de bytecode, incluidas las que el harness ya
+        # atrapa como esperadas (ej. org.json.JSONException, decenas de
+        # veces por corrida) -- escanear el texto COMPLETO por frames
+        # mezclaba esos frames de ruido (ya manejados, no son el crash
+        # real) con los del crash real que si se propago. "DEDUP_TOKEN:"
+        # es el delimitador real que Jazzer imprime al final de CADA
+        # bloque de excepcion -- acotar la busqueda de frames a la
+        # ventana real entre el match y ese token evita la mezcla.
+        window_end = raw_text.find("DEDUP_TOKEN:", m.start())
+        window = raw_text[m.start():window_end] if window_end != -1 else raw_text[m.start():m.start() + 4000]
+        frames = _extract_java_frames(window)
+        return {
+            "sanitizer": None,
+            "bug_type": f"java-exception:{exception_type}",
+            "message": message,
+            "target_frames": frames,
+            "top_frame": frames[0] if frames else None,
+            "severity": _java_exception_severity(exception_type),
+            "stack_hash": _stack_hash("java-exception", exception_type, *frames[:3]),
         }
 
     if returncode is not None and returncode != 0:
