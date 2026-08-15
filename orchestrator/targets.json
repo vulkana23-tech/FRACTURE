@@ -1,0 +1,136 @@
+[
+  {
+    "id": "tofn_verify_ecdsa",
+    "engine": "rust",
+    "crate_dir": "/opt/fracture/build/rust_targets/tofn",
+    "target": "verify_ecdsa",
+    "known_finding": false,
+    "state": {}
+  },
+  {
+    "id": "tofn_verify_ed25519",
+    "engine": "rust",
+    "crate_dir": "/opt/fracture/build/rust_targets/tofn",
+    "target": "verify_ed25519",
+    "known_finding": false,
+    "state": {}
+  },
+  {
+    "id": "wsts_point_from_bytes",
+    "engine": "rust",
+    "crate_dir": "/opt/fracture/build/rust_targets/sbtc/wsts",
+    "target": "point_from_bytes",
+    "known_finding": false,
+    "state": {}
+  },
+  {
+    "id": "wsts_scalar_from_bytes",
+    "engine": "rust",
+    "crate_dir": "/opt/fracture/build/rust_targets/sbtc/wsts",
+    "target": "scalar_from_bytes",
+    "known_finding": false,
+    "state": {}
+  },
+  {
+    "id": "bellperson_groth16_proof_read",
+    "engine": "rust",
+    "crate_dir": "/opt/fracture/build/rust_targets/bellperson",
+    "target": "groth16_proof_read",
+    "known_finding": false,
+    "state": {}
+  },
+  {
+    "id": "neptune_poseidon_hash",
+    "engine": "rust",
+    "crate_dir": "/opt/fracture/build/rust_targets/neptune",
+    "target": "poseidon_hash",
+    "known_finding": false,
+    "state": {}
+  },
+  {
+    "id": "rust_fil_proofs_fr32_write_unpadded",
+    "engine": "rust",
+    "crate_dir": "/opt/fracture/build/rust_targets/rust-fil-proofs/fr32",
+    "target": "write_unpadded",
+    "known_finding": false,
+    "state": {}
+  },
+  {
+    "id": "serai_dkg_pedpop_read_commitments",
+    "engine": "rust",
+    "crate_dir": "/opt/fracture/build/rust_targets/serai/crypto/dkg/pedpop",
+    "target": "read_commitments",
+    "known_finding": false,
+    "state": {}
+  },
+  {
+    "id": "fabric_amcl_dilithium_verify2",
+    "engine": "go",
+    "repo": "https://github.com/hyperledger/fabric-amcl",
+    "package_path": "core",
+    "fuzz_test_file": "/opt/fracture/orchestrator/fuzz_tests/dilithium_verify_test.go",
+    "fuzz_func": "FuzzDLVerify2",
+    "known_finding": true,
+    "state": {}
+  },
+  {
+    "id": "fabric_ca_decode_token",
+    "engine": "go",
+    "repo": "https://github.com/hyperledger/fabric-ca",
+    "package_path": "util",
+    "fuzz_test_file": "/opt/fracture/orchestrator/fuzz_tests/fabric_ca_decodetoken_test.go",
+    "fuzz_func": "FuzzDecodeToken",
+    "known_finding": false,
+    "state": {}
+  },
+  {
+    "id": "fabric_chaincode_go_newstateep",
+    "engine": "go",
+    "repo": "https://github.com/hyperledger/fabric-chaincode-go",
+    "package_path": "pkg/statebased",
+    "fuzz_test_file": "/opt/fracture/orchestrator/fuzz_tests/fabric_chaincode_go_newstateep_test.go",
+    "fuzz_func": "FuzzNewStateEP",
+    "known_finding": false,
+    "state": {}
+  },
+  {
+    "id": "fabric_config_newenvelope",
+    "engine": "go",
+    "repo": "https://github.com/hyperledger/fabric-config",
+    "package_path": "configtx",
+    "fuzz_test_file": "/opt/fracture/orchestrator/fuzz_tests/fabric_config_newenvelope_test.go",
+    "fuzz_func": "FuzzNewEnvelope",
+    "known_finding": false,
+    "state": {}
+  },
+  {
+    "id": "fabric_contract_api_go_fromstring",
+    "engine": "go",
+    "repo": "https://github.com/hyperledger/fabric-contract-api-go",
+    "package_path": "serializer",
+    "fuzz_test_file": "/opt/fracture/orchestrator/fuzz_tests/fabric_contract_api_go_fromstring_test.go",
+    "fuzz_func": "FuzzFromString",
+    "known_finding": false,
+    "state": {}
+  },
+  {
+    "id": "fabric_gateway_parsetransactionenvelope",
+    "engine": "go",
+    "repo": "https://github.com/hyperledger/fabric-gateway",
+    "package_path": "pkg/client",
+    "fuzz_test_file": "/opt/fracture/orchestrator/fuzz_tests/fabric_gateway_parsetransactionenvelope_test.go",
+    "fuzz_func": "FuzzParseTransactionEnvelope",
+    "known_finding": false,
+    "state": {}
+  },
+  {
+    "id": "fabric_admin_sdk_newapplicationpolicy",
+    "engine": "go",
+    "repo": "https://github.com/hyperledger/fabric-admin-sdk",
+    "package_path": "pkg/chaincode",
+    "fuzz_test_file": "/opt/fracture/orchestrator/fuzz_tests/fabric_admin_sdk_signaturepolicy_test.go",
+    "fuzz_func": "FuzzNewApplicationPolicy",
+    "known_finding": false,
+    "state": {}
+  }
+]
