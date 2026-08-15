@@ -132,5 +132,16 @@
     "fuzz_func": "FuzzNewApplicationPolicy",
     "known_finding": false,
     "state": {}
+  },
+  {
+    "id": "fabric_chaincode_go_attrmgr_idemix",
+    "engine": "go",
+    "repo": "https://github.com/hyperledger/fabric-chaincode-go",
+    "package_path": "pkg/attrmgr",
+    "fuzz_test_file": "/opt/fracture/orchestrator/fuzz_tests/fabric_chaincode_go_attrmgr_idemix_test.go",
+    "fuzz_func": "FuzzGetAttributesFromIdemix",
+    "known_finding": false,
+    "state": {},
+    "generated_by": "harness_gen/generate_go_harness.py (qwen3-coder:30b, 2 intentos, ver harness_gen/README.md)"
   }
 ]
