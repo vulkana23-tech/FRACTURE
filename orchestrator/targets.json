@@ -161,5 +161,15 @@
     "artifact_dir": "/opt/fracture/build/zabbix_zbxjson/crashes",
     "known_finding": false,
     "state": {}
+  },
+  {
+    "id": "fpc_unmarshal_values",
+    "engine": "c",
+    "binary": "/opt/fracture/build/fpc_unmarshal_values/fuzz_unmarshal_values",
+    "corpus_dir": "/opt/fracture/build/fpc_unmarshal_values/corpus",
+    "artifact_dir": "/opt/fracture/build/fpc_unmarshal_values/crashes",
+    "extra_asan_options": "detect_leaks=0",
+    "known_finding": true,
+    "state": {}
   }
 ]

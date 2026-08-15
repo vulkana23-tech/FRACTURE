@@ -83,6 +83,44 @@ venv/bin/python3 harness_gen/generate_go_harness.py \
 venv/bin/python3 -m pytest harness_gen/ -v
 ```
 
+## Intento real: candidato de `workerd` (2026-08-15)
+
+`targets/find_patch_directed_candidates.py` había marcado 3 commits
+reales de `cloudflare/workerd` como candidatos de alta prioridad (UAF
+en streams, UAF en `jsg::Function`, bypass de RPC flag). Se investigó
+en serio antes de generar nada: los 3 diffs reales mostraron que son
+bugs de **ciclo de vida de V8/JS** (re-entrancy vía `toString()` de
+usuario, GC de `ArrayBuffer`/`BackingStore`, semántica de capacidades
+RPC vía `jsg::Deserializer`) -- no bugs de parseo de bytes no
+confiables. Ese tipo de bug solo se dispara con una secuencia
+específica de llamadas JS reales dentro de V8 (exactamente lo que los
+tests `autovuln-*.js`/`.wd-test` del propio `workerd` ya cubren), no
+algo que `LLVMFuzzerTestOneInput(bytes)` pueda alcanzar. Se decidió
+NO generar un harness falso que nunca iba a compilar/tener sentido
+-- ni con `generate_harness.py` (C, sin validación real de todas
+formas) ni forzando `generate_go_harness.py` (Go, lenguaje
+equivocado).
+
+**Se pivoteó a un candidato real y mejor**: `fabric-private-chaincode`,
+función `unmarshal_values` (misma función que ya motivó el harness de
+parson existente en este proyecto). Ahí SÍ el bug real
+(`1e92847744`, "Fix null pointer issuer in unmarshal_values") es
+exactamente parseo de bytes no confiables dentro de un enclave SGX --
+la forma correcta para este stack. Harness nuevo escrito A MANO
+(`orchestrator/fuzz_harnesses/fpc_unmarshal_values_harness.c++`, C++,
+no generado por IA -- ya se tenía todo el contexto real de la lectura
+manual del código, generar hubiera sido más lento que escribirlo) que
+replica la función completa (post-fix), a diferencia del harness de
+parson existente que solo cubre el tokenizado JSON. Encontró un leak
+real (LeakSanitizer) en el primer intento real -- ver
+`findings/2026-08-15_fabric-private-chaincode_unmarshal_values_leak.md`.
+
+**Lección real para el próximo candidato de C++ con JSG/V8 en la
+firma**: no es candidato de `harness_gen/` tal como está hoy -- ver
+`targets/README.md`, "Lo que falta", para la heurística propuesta
+(chequear `jsg::Lock`/`v8::` en la firma antes de siquiera intentar
+generar).
+
 ## Lo que falta (honesto)
 
 - No hay generador para Rust/cargo-fuzz todavía (el otro engine real

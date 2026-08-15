@@ -19,10 +19,16 @@ Implementado y probado en vivo:
   `orchestrator/fuzz_harnesses/*_build.sh`, un script por target, como
   ya era. Registrados los 2 binarios de C que ya existían compilados
   (`fpc_parson`, `zabbix_zbxjson`) pero que hasta ahora nunca habían
-  entrado al registro/scheduler -- corrían solo a mano.
+  entrado al registro/scheduler -- corrían solo a mano. Sumado un
+  tercero: `fpc_unmarshal_values` (nuevo harness, encontrado vía
+  `targets/find_patch_directed_candidates.py` contra
+  fabric-private-chaincode -- ver `findings/2026-08-15_fabric-private-chaincode_unmarshal_values_leak.md`,
+  ya encontró un leak real). Campo opcional `extra_asan_options` por
+  target en `targets.json` (ej. `"detect_leaks=0"`) -- opt-in, nunca
+  cambia el comportamiento default de los demás targets de C.
 - `scheduler.py` — la pieza que faltaba: loop real de sweeps sobre
-  `targets.json` (18 targets reales: 8 Rust vía cargo-fuzz, 8 Go vía
-  `go test -fuzz`, 2 C vía libFuzzer), con:
+  `targets.json` (19 targets reales: 8 Rust vía cargo-fuzz, 8 Go vía
+  `go test -fuzz`, 3 C vía libFuzzer), con:
   - **Concurrencia acotada a los cores reales** (`--max-concurrent`,
     default 2 targets a la vez con `cores/max_concurrent` workers c/u
     — evita repartir 18 cores en migajas entre muchos targets a la

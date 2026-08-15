@@ -65,16 +65,38 @@ historial): 0 candidatos -- honesto, no un bug: TODO el historial de
 seguridad real de ese repo fueron bumps de dependencias, correctamente
 filtrados.
 
-**Resultado real contra `cloudflare/workerd`** (1 año): encontró
-fixes reales y recientes de use-after-free en
-`src/workerd/api/streams/` (`Address UAF and safety bugs in pipe
-handling`, `Fix use-after-free when a native jsg::Function frees
-itself mid-call`) y en `src/workerd/api/node/zlib-util.c++` -- código
-que este mismo proyecto **nunca harnesseó** (los 4 targets reales de
-workerd en `orchestrator/fuzz_harnesses/` son dataurl/encoding/
-formdata/mimetype, ninguno toca streams ni zlib). Candidato concreto y
-de alta prioridad para la próxima ronda de `harness_gen/`, no
-teórico.
+**Resultado real contra `cloudflare/workerd`** (1 año): encontró 8
+commits reales relacionados a seguridad. **Corrección honesta post-
+revisión manual (2026-08-15)**: los 3 candidatos revisados a fondo
+(UAF en `streams/`, UAF en `jsg::Function`, bypass de flag RPC en
+deserialización de wrapped-binding) resultaron ser **bugs de ciclo de
+vida de V8/JS** (re-entrancy vía `toString()` de usuario, GC de
+ArrayBuffers, semántica de capacidades RPC) -- no bugs de parseo de
+bytes no confiables. Ese tipo de bug necesita ejecutar JS real dentro
+del motor V8 en una secuencia específica de llamadas (exactamente lo
+que los tests `autovuln-*.js`/`.wd-test` del propio workerd ya hacen),
+no algo que un harness `bytes -> función` de libFuzzer pueda
+encontrar. Se intentó generar un harness igual (`dale, arrancá con
+harness_gen para el candidato de workerd`) y se descartó honestamente
+en vez de forzar algo que no iba a funcionar -- ver
+`harness_gen/README.md`. Conclusión real: el filtro actual (mensaje +
+extensión de archivo) encuentra commits de seguridad reales, pero no
+distingue la FORMA del bug (parseo de bytes vs. lógica/lifecycle de
+runtime) -- ver "Lo que falta" abajo.
+
+**Resultado real contra `hyperledger/fabric-private-chaincode`** (2
+años): encontró el commit real `1e92847744` ("Fix null pointer issuer
+in unmarshal_values", 2025-03-29) -- la MISMA función que ya motivó el
+harness de parson existente en este proyecto, pero cubriendo mucho
+menos que la función completa. Se construyó un harness nuevo
+(`fpc_unmarshal_values_harness.c++`) que sí replica la función
+completa (post-fix) -- encontró un memory leak real en el primer
+intento (LeakSanitizer, `[{"key":"a"}]` sin campo `"value"` no libera
+el `JSON_Value*`). Ver
+`findings/2026-08-15_fabric-private-chaincode_unmarshal_values_leak.md`.
+Este SÍ era la forma correcta de bug (parseo de bytes no confiables
+dentro de un enclave SGX) -- contraste real y útil con el caso de
+`workerd` de arriba.
 
 ## Uso
 
@@ -104,12 +126,21 @@ cero -- leer el código primero.
   un `GITHUB_TOKEN` real (5000/hora en vez de 60) dejaría de ser un
   problema, pero eso requiere que el usuario decida configurar uno,
   no se asumió ni se generó ningún token en esta ronda.
+- **No distingue la FORMA del bug** -- un commit puede mencionar "UAF"
+  o "null pointer" de verdad y aun así ser un bug de lifecycle de V8/JS
+  (necesita el motor JS real corriendo) en vez de un bug de parseo de
+  bytes (fuzzeable con libFuzzer). El caso real de `workerd` de arriba
+  es exactamente esto. No hay heurística barata conocida para
+  distinguirlos solo del mensaje de commit -- hace falta leer el diff
+  real (lo que se hizo a mano esta ronda) o, mejor señal automática:
+  si la función tocada tiene `jsg::Lock`/`v8::` en su firma, es
+  candidato a descartar de entrada. No implementado todavía.
 - `find_patch_directed_candidates.py` no está conectado todavía a
-  `harness_gen/` (el candidato de `workerd`/zlib-util.c++ que encontró
-  hay que pasarlo a mano a `generate_go_harness.py`/
+  `harness_gen/` de forma automática (los candidatos reales que
+  encontró se pasaron a mano a `generate_go_harness.py`/
   `generate_harness.py`) -- ambos ya toman `--repo`/función objetivo
   por separado, conectarlos directo (que el output de uno alimente al
   otro sin copiar/pegar a mano) es una extensión natural, no se hizo
-  en esta ronda porque `generate_go_harness.py` es para Go y el
-  candidato real que salió es C++ (`generate_harness.py`, que todavía
+  en esta ronda porque `generate_go_harness.py` es para Go y el primer
+  candidato real que se investigó a fondo era C++ (`generate_harness.py`, que todavía
   no tiene loop de validación real -- ver `harness_gen/README.md`).

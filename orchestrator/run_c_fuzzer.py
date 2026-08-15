@@ -38,6 +38,7 @@ def run_c_fuzzer(
     artifact_dir: str,
     duration_seconds: int,
     workers: int,
+    extra_asan_options: str = "",
 ) -> dict:
     if not os.path.isfile(binary):
         raise FileNotFoundError(f"binario no encontrado: {binary} (compilarlo es especifico de cada target, ver build_script del registro)")
@@ -49,7 +50,14 @@ def run_c_fuzzer(
     isolated_run_dir = tempfile.mkdtemp(prefix=f"fracture_cfuzz_{os.path.basename(binary)}_")
 
     env = dict(os.environ)
-    env["ASAN_OPTIONS"] = "detect_odr_violation=0"
+    asan_options = "detect_odr_violation=0"
+    # Opt-in por target, nunca global -- un leak YA CONOCIDO y de baja
+    # severidad en un target especifico (ver findings/, unmarshal_values)
+    # no deberia apagar deteccion de leaks para el resto de los targets
+    # de C, que siguen queriendo esa señal real.
+    if extra_asan_options:
+        asan_options += ":" + extra_asan_options
+    env["ASAN_OPTIONS"] = asan_options
 
     print(f"Corriendo {binary} por {duration_seconds}s ({workers} workers, cwd aislado {isolated_run_dir})...")
     result = subprocess.run(
@@ -111,9 +119,10 @@ def main():
     parser.add_argument("--artifact-dir", required=True)
     parser.add_argument("--duration", type=int, default=2400)
     parser.add_argument("--workers", type=int, default=os.cpu_count() or 4)
+    parser.add_argument("--extra-asan-options", default="", help="ej. detect_leaks=0 -- opt-in por target, ver docstring de run_c_fuzzer")
     args = parser.parse_args()
 
-    outcome = run_c_fuzzer(args.binary, args.corpus_dir, args.artifact_dir, args.duration, args.workers)
+    outcome = run_c_fuzzer(args.binary, args.corpus_dir, args.artifact_dir, args.duration, args.workers, args.extra_asan_options)
 
     print(f"\nTotal de ejecuciones reales: {outcome['total_runs']:,}")
     if outcome["crashes"]:

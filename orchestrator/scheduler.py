@@ -231,6 +231,7 @@ def run_one_cycle(target: dict, duration_seconds: int, workers: int) -> dict:
             artifact_dir=target["artifact_dir"],
             duration_seconds=duration_seconds,
             workers=workers,
+            extra_asan_options=target.get("extra_asan_options", ""),
         )
     else:
         raise ValueError(f"engine desconocido: {target['engine']!r}")
