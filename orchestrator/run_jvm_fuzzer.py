@@ -40,6 +40,20 @@ def run_jvm_fuzzer(
     if not os.path.isdir(classes_dir):
         raise FileNotFoundError(f"classes-dir no encontrado: {classes_dir} (compilar es especifico de cada target)")
 
+    # Bug real encontrado en produccion (2026-08-16, primer uso de esto
+    # fuera del scheduler -- harness_gen/generate_jvm_harness.py, que
+    # a diferencia de targets.json puede recibir rutas relativas):
+    # jazzer corre con cwd=isolated_run_dir (un directorio DISTINTO de
+    # donde se invoco este script), asi que una ruta relativa en el
+    # classpath se resuelve mal -- "ERROR: 'X' not found on classpath"
+    # aunque las clases existan de verdad. targets.json siempre usa
+    # rutas absolutas, por eso nunca aparecio ahi -- mismo motivo real
+    # por el que run_c_fuzzer.py ya hace os.path.abspath(binary).
+    classes_dir = os.path.abspath(classes_dir)
+    lib_dir = os.path.abspath(lib_dir)
+    corpus_dir = os.path.abspath(corpus_dir)
+    artifact_dir = os.path.abspath(artifact_dir)
+
     jars = sorted(glob.glob(os.path.join(lib_dir, "*.jar")))
     classpath = ":".join([classes_dir] + jars)
 

@@ -191,5 +191,17 @@
     "artifact_dir": "/opt/fracture/build/jvm_targets/fabric_chaincode_java/crashes",
     "known_finding": true,
     "state": {}
+  },
+  {
+    "id": "fabric_chaincode_java_fromBuffer",
+    "engine": "jvm",
+    "classes_dir": "/opt/fracture/build/jvm_targets/fabric_chaincode_java/classes",
+    "lib_dir": "/opt/fracture/build/jvm_targets/fabric_chaincode_java/lib",
+    "target_class": "FuzzFromBuffer",
+    "corpus_dir": "/opt/fracture/build/jvm_targets/fabric_chaincode_java/corpus_frombuffer",
+    "artifact_dir": "/opt/fracture/build/jvm_targets/fabric_chaincode_java/crashes_frombuffer",
+    "known_finding": false,
+    "state": {},
+    "generated_by": "harness_gen/generate_jvm_harness.py (qwen3-coder:30b, 1 intento con reglas mejoradas)"
   }
 ]

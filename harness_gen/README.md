@@ -219,9 +219,81 @@ function declaration" -- error real en C99+, no un warning), **intento
 `cJSON_Delete` correctamente para liberar memoria, tal cual pedía la
 regla del prompt.
 
+## `generate_jvm_harness.py` (2026-08-16)
+
+Cuarto generador, mismo criterio (compila y CORRE de verdad, reintenta
+con el error real). Mismo patrón que Rust: `--classes-dir`/`--lib-dir`
+tienen que estar YA PREPARADOS de forma persistente
+(`build/jvm_targets/<target>/`, un `*_build.sh` real por target --
+Gradle/Maven real, no hay forma barata de bootstrapear un proyecto
+Java arbitrario). `--repo` se usa solo para leer el `.java` fuente
+real, clon shallow aparte.
+
+Cubre los dos casos reales que ya aparecieron en este proyecto:
+método público (llamada directa) y método privado (bypass de
+constructor vía `ReflectionFactory`, mismo patrón ya validado a mano
+en `parseAttributes`, dado al modelo como ejemplo concreto en el
+prompt).
+
+**Primer intento real, en vivo, contra `JSONTransactionSerializer.fromBuffer`**
+(candidato encontrado a mano vía `javap`, no todavía por el pipeline
+automático -- ver abajo): 2 corridas fallaron primero, con hallazgos
+reales:
+
+1. El modelo eligió innecesariamente el patrón de reflection para un
+   método que es **público** -- se enredó con nombres de paquete mal
+   escritos y símbolos no importados. Regla del prompt reforzada:
+   "si es público, SIEMPRE llamada directa, nunca reflection".
+2. El modelo adivinó un método (`TypeSchema.setType(...)`) que no
+   existe en la API real de una clase cuyo código fuente nunca se le
+   mostró. Regla agregada: nunca adivinar métodos de una clase sin ver
+   su código real, construir la instancia más simple posible en su
+   lugar (`new Tipo()` sin llamadas encima).
+
+Con esas 2 reglas agregadas, el intento siguiente validó en el
+**primer intento real** -- y el harness resultante encontró un
+`NullPointerException` real en `JSONTransactionSerializer.convert`
+(bug real, no del harness) en menos de 20s de fuzzing. Ver
+`findings/2026-08-16_fabric-chaincode-java_jsontransactionserializer_npe.md`.
+
+**Bug real propio encontrado en el camino, en `run_jvm_fuzzer.py` (no
+en el generador)**: el classpath usaba rutas RELATIVAS -- funcionaba
+siempre desde `orchestrator/targets.json` (que ya usa rutas absolutas)
+pero rompía apenas se probó desde `generate_jvm_harness.py` con una
+ruta relativa, porque Jazzer corre con un cwd aislado DISTINTO de
+donde se invoca el script (mismo motivo real por el que
+`run_c_fuzzer.py` ya hace `os.path.abspath(binary)` -- acá faltaba el
+mismo fix). Corregido con `os.path.abspath()` en las 4 rutas reales
+que recibe la función.
+
+## `targets/patch_directed_jvm_harness.py` (2026-08-16)
+
+Conecta `find_patch_directed_candidates.py` con
+`generate_jvm_harness.py` -- mismo patrón que la versión Rust
+(`--classes-dir`/`--lib-dir` ya preparados, `--repo` solo para
+escanear historial). Regex de extracción de métodos Java propio,
+prioriza firmas con `byte[]`/`String`, y escanea el cuerpo crudo del
+diff además del contexto de hunk (mismo motivo real ya documentado en
+las versiones Go/Rust: `git show` a veces ancla el contexto a la clase
+contenedora, no al método).
+
+**Resultado real contra `hyperledger/fabric-chaincode-java`** (2 años):
+0 candidatos -- honesto, no un bug: el único commit de seguridad real
+en esa ventana es un bump de dependencias sin ningún cambio a nivel de
+función real (mismo patrón ya visto con `fabric-ca` para Go). Mecánica
+del pipeline probada correcta con tests unitarios reales (firmas
+exactas de `parseAttributes`/`fromBuffer`, los dos métodos que ya se
+fuzzearon de verdad).
+
 ## Lo que falta (honesto)
 
 - El generador de C solo cubre el caso de librería amalgamada en 1-2
   archivos -- no resuelve dependencias reales de un build system (ej.
   no podría validar `zbxjson` solo, que necesita 5 archivos reales
   además del propio; ahí `--extra-source` sigue siendo manual).
+- `patch_directed_jvm_harness.py` no encontró todavía un candidato
+  real vivo (los otros 2 repos Java en scope, `fabric-sdk-java` y
+  `besu`, no tienen classpath persistente preparado todavía -- `besu`
+  además dio, en la búsqueda manual, candidatos que resultaron ser
+  código de test/reference-tests, no producción, mismo tipo de
+  descarte honesto que ya pasó con el candidato de `workerd`).
