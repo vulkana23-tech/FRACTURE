@@ -25,17 +25,26 @@ from operator_tree import mutate
 
 def generate_seeds(seed_docs, expr: str, count: int, rng: random.Random):
     """Devuelve `count` documentos JSON nuevos -- cada uno parte de un
-    seed real elegido al azar, y usa el pool ACUMULADO (seeds
-    originales + mutantes ya generados en esta misma corrida) como
-    `corpus_real` para `interleave`, asi la mezcla tiene variedad real
-    despues de las primeras iteraciones."""
-    pool = list(seed_docs)
+    seed real elegido al azar, y usa SIEMPRE los seeds ORIGINALES (no
+    los mutantes ya generados en esta corrida) como `corpus_real` para
+    `interleave`.
+
+    Bug real encontrado corriendo esto en vivo contra
+    fpc_unmarshal_values (2026-08-16): la version anterior agregaba
+    cada mutante al pool para que las SIGUIENTES iteraciones lo usaran
+    de nuevo en `interleave` -- con `loop(interleave, 3)` compuesto 200
+    veces, cada mutante podia mezclarse con un mutante que a su vez ya
+    era la mezcla de mezclas anteriores, creciendo el tamano del
+    documento sin control (confirmado en vivo: un input real llego a
+    ~495KB, la campana de fuzzing se volvio impracticable, exec/s cayo
+    a ~460 desde varios miles). `interleave` contra SOLO los seeds
+    originales (tamano acotado, conocido) evita el crecimiento
+    compuesto mientras sigue dando variedad real."""
     generated = []
     for _ in range(count):
         base = rng.choice(seed_docs)
-        mutant = mutate(expr, base, pool, rng)
+        mutant = mutate(expr, base, seed_docs, rng)
         generated.append(mutant)
-        pool.append(mutant)
     return generated
 
 

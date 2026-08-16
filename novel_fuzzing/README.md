@@ -54,7 +54,66 @@ veces (cruzando cada mutante con los ya generados, para que
 `interleave` tenga variedad real después de las primeras iteraciones),
 y escribe cada resultado como un archivo de corpus.
 
-## Experimento real: A/B contra `zabbix_zbxjson_open` (2026-08-16)
+## Experimento real #2, corregido: A/B contra `fpc_unmarshal_values` (2026-08-16)
+
+El primer experimento (contra `zbxjson`, más abajo) tenía dos problemas
+metodológicos reales, encontrados corriendo esto de nuevo con más
+cuidado:
+
+1. **Confound de tiempo de carga**: comparar por tiempo de pared fijo
+   (`-max_total_time`) le daba ventaja injusta al control, porque
+   cargar/deduplicar 204 archivos de semilla al arrancar le come
+   presupuesto real de tiempo a la campaña de tratamiento. **Corregido**
+   comparando por EJECUCIONES exactas (`-runs=500000` para ambos
+   grupos), eliminando el confound.
+2. **Bug real en `generate_seeds()`**: la primera versión agregaba cada
+   mutante generado al pool que `interleave` usa para la MUTACIÓN
+   SIGUIENTE -- con `loop(interleave,3)` compuesto 200 veces, el
+   tamaño de los documentos crecía sin control (un input real llegó a
+   ~495KB desde seeds de <100 bytes, la campaña se volvió
+   impracticable, `exec/s` cayó de varios miles a ~460). **Corregido**:
+   `interleave` mezcla siempre contra los seeds ORIGINALES, nunca
+   contra mutantes ya generados -- tamaño acotado confirmado en vivo
+   (máximo real 371 bytes con el fix, vs 495KB antes). Ver
+   `test_seed_from_operator_tree.py`.
+
+**Metodología, ronda 2**: mismos 4 seeds base (ahora formato real de
+`unmarshal_values`: `[{"key":"...", "value":"<base64>"}]`), 200
+mutantes por grupo de tratamiento, **5 repeticiones con distinta
+semilla de RNG** (no una sola corrida), **500,000 ejecuciones exactas**
+por corrida (`-runs=500000`, no tiempo de pared), 1 worker,
+`ASAN_OPTIONS=detect_leaks=0` (este target tiene un memory leak YA
+documentado y conocido -- `findings/2026-08-15_..._leak.md` -- que si
+no se desactiva aborta la campaña en los primeros cientos de
+ejecuciones sin llegar a explorar nada más, igual que en su config real
+de `orchestrator/targets.json`).
+
+**Resultado real, promedio de 5 corridas**:
+
+| métrica | control (4 seeds crudos) | tratamiento (204 seeds) |
+|---|---|---|
+| `cov` (cobertura de código) | 369.2 | 369.6 |
+| `ft` (features, métrica más fina de libFuzzer) | 1552.4 | 1577.8 |
+
+`cov` prácticamente empatado (+0.1%). `ft` con ventaja modesta para el
+tratamiento (+1.6% en promedio, gana en 3 de 5 semillas de RNG) --
+señal real pero chica, no un resultado contundente. Ningún crash NUEVO
+en ninguna de las 10 corridas (más allá del leak ya conocido,
+desactivado a propósito).
+
+**Conclusión honesta, ronda 2**: con la metodología corregida (iso-
+ejecuciones, 5 repeticiones, target con más profundidad real de
+parseo), la mutación estructural muestra una ventaja **pequeña y
+consistente en `ft`, pero no en `cov`** -- ni un resultado nulo ni un
+"ganador" claro. Es una señal real de que sembrar con documentos
+estructuralmente diversos ayuda a encontrar más *feature counters*
+internos (probablemente combinaciones de campos/valores que el havoc
+puro tarda más en descubrir por azar), pero no alcanza para decir que
+encuentra código nuevo más rápido en esta ventana de ejecuciones. Un
+efecto real pero modesto, medido con rigor -- no una demostración
+contundente de la idea, tampoco su descarte.
+
+## Experimento real #1 (metodología con confounds, ver arriba): A/B contra `zabbix_zbxjson_open` (2026-08-16)
 
 **Metodología**: 4 documentos semilla realistas (formato real del
 protocolo trapper de Zabbix: `{"request":"sender data","data":[...]}`
@@ -112,9 +171,15 @@ venv/bin/python3 -m pytest novel_fuzzing/ -v
 ## Lo que falta (honesto)
 
 - No está conectado a ningún target del daemon 24/7 todavía -- sigue
-  siendo un experimento standalone, no una feature integrada.
-- El experimento A/B de arriba es una sola corrida, no concluyente --
-  ver "Conclusión honesta".
+  siendo un experimento standalone, no una feature integrada. Con el
+  resultado real (efecto chico en `ft`, no en `cov`) todavía no
+  justifica el costo de integrarlo al scheduler sin antes probarlo
+  contra más targets.
+- El experimento #2 (5 repeticiones, iso-ejecuciones) es más riguroso
+  que el #1, pero sigue siendo UN target -- no se sabe si el efecto
+  chico en `ft` generaliza a otros parsers JSON del proyecto
+  (`fpc_parson`, `zbxjson`, `cJSON_setnumberhelper`) o es específico de
+  `unmarshal_values`.
 - Solo cubre documentos JSON -- la notación (`transpose`,
   `semantic_inverse`) podría generalizarse a otros formatos
   estructurados (protobuf, el AST de un lenguaje), no se intentó acá.
