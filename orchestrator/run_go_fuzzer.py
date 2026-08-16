@@ -62,6 +62,50 @@ def _ensure_go_module(repo_dir: str, repo_url: str) -> None:
     )
 
 
+_MOCKERY_BIN = "/usr/local/bin/mockery"
+
+
+def _generate_mocks(repo_dir: str) -> None:
+    """Bug real encontrado en produccion (2026-08-16): fabric-admin-sdk
+    y fabric-gateway (ambos repos MODERNOS, con go.mod real -- a
+    diferencia del caso viejo de _ensure_go_module de arriba) fallaban
+    "returncode=1 sin crashes -- no fuzzeo de verdad, fallo antes de
+    arrancar" en CADA sweep del daemon 24/7, mas de un dia entero sin
+    que nadie lo notara -- el paquete real NO compila sin generar mocks
+    primero, y ninguno de los dos los committea al repo (convencion
+    real: se generan en build time). Confirmado que son DOS
+    herramientas de mock DISTINTAS, no una sola:
+
+    1. mockgen (go.uber.org/mock, via directivas reales //go:generate
+       en el codigo -- confirmado en fabric-admin-sdk/pkg/chaincode) --
+       `go generate ./...` es el comando ESTANDAR de Go para esto, cubre
+       cualquier repo que use este patron, no solo estos dos.
+    2. mockery (github.com/vektra/mockery, config propia .mockery.yml,
+       NO se invoca via go:generate -- confirmado en fabric-gateway) --
+       necesita su propio binario (instalado en /usr/local/bin/mockery,
+       misma convencion que jazzer/katana/httpx en este proyecto) y se
+       corre desde la raiz del repo clonado.
+
+    Fail-open real en los dos casos, igual criterio que _ensure_go_module
+    arriba: si el repo no usa ninguna de las dos, o el binario no esta
+    instalado, esto no hace nada -- el compile real va a fallar despues
+    con un error mas claro de todas formas, nunca se esconde un fallo
+    real detras de este paso."""
+    subprocess.run(
+        ["go", "generate", "./..."],
+        cwd=repo_dir, capture_output=True, timeout=120,
+    )
+    has_mockery_config = any(
+        os.path.exists(os.path.join(repo_dir, name))
+        for name in (".mockery.yml", ".mockery.yaml")
+    )
+    if has_mockery_config and os.path.exists(_MOCKERY_BIN):
+        subprocess.run(
+            [_MOCKERY_BIN],
+            cwd=repo_dir, capture_output=True, timeout=120,
+        )
+
+
 def run_go_fuzzer(
     repo_url: str,
     package_path: str,
@@ -72,6 +116,7 @@ def run_go_fuzzer(
 ) -> dict:
     repo_dir = _clone_shallow(repo_url)
     _ensure_go_module(repo_dir, repo_url)
+    _generate_mocks(repo_dir)
     target_dir = os.path.join(repo_dir, package_path)
     if not os.path.isdir(target_dir):
         shutil.rmtree(repo_dir, ignore_errors=True)

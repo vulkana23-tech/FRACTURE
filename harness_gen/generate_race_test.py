@@ -51,7 +51,7 @@ import requests
 from config import OLLAMA_MODEL, OLLAMA_URL
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "orchestrator"))
-from run_go_fuzzer import _clone_shallow, _ensure_go_module  # noqa: E402 -- reuso real, no reimplementacion
+from run_go_fuzzer import _clone_shallow, _ensure_go_module, _generate_mocks  # noqa: E402 -- reuso real, no reimplementacion
 
 _GENERATE_TIMEOUT = 1200  # mismo motivo real ya documentado en generate_go_harness.py (CPU pura, ~0.8 tok/seg)
 _VALIDATE_TIMEOUT = 60
@@ -224,6 +224,7 @@ def generate_and_validate_race_test(
     repo_dir = _clone_shallow(repo_url)
     try:
         _ensure_go_module(repo_dir, repo_url)
+        _generate_mocks(repo_dir)
         package_name, files_content = _read_package_files(repo_dir, package_path)
 
         prompt = _PROMPT_TEMPLATE.format(

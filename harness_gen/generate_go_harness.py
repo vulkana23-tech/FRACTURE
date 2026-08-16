@@ -36,7 +36,7 @@ import requests
 from config import OLLAMA_MODEL, OLLAMA_URL
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "orchestrator"))
-from run_go_fuzzer import _clone_shallow, _ensure_go_module  # noqa: E402 -- reuso real, no reimplementacion
+from run_go_fuzzer import _clone_shallow, _ensure_go_module, _generate_mocks  # noqa: E402 -- reuso real, no reimplementacion
 
 # Bug real encontrado en produccion (2026-08-15): este VPS no tiene GPU
 # (confirmado, `nvidia-smi` ni siquiera esta instalado) -- qwen3-coder:30b
@@ -183,6 +183,7 @@ def generate_and_validate_go_harness(
     repo_dir = _clone_shallow(repo_url)
     try:
         _ensure_go_module(repo_dir, repo_url)
+        _generate_mocks(repo_dir)
         filename, file_content, package_name = _find_function_file(repo_dir, package_path, function_name)
 
         prompt = _PROMPT_TEMPLATE.format(
