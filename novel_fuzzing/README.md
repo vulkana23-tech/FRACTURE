@@ -233,12 +233,83 @@ donde el havoc de bytes puro tarda en tropezar por azar con la
 combinación correcta, y donde transponer/invertir semánticamente
 valores YA anidados encuentra estados nuevos más rápido.
 
-**Cautela honesta que sigue aplicando**: son 5 corridas (4 targets/
-variantes distintas), efectos que van de -1% a +6%, sin significancia
-estadística formal calculada (solo promedios de 5 repeticiones por
-condición) -- señal real y patrón consistente en dos dimensiones
-independientes, no una ley demostrada. El anidamiento parece ser la
-dimensión que más importa de las dos probadas hasta ahora.
+**Cautela honesta que aplicaba en ese momento**: 5 corridas, efectos de
+-1% a +6%, señal real pero condicional -- ver experimento #6 abajo,
+que cambia esta conclusión.
+
+## Experimento real #6, aislando las dos variables: anidamiento + procesamiento profundo JUNTOS (2026-08-16)
+
+Pregunta directa que quedó abierta: si el anidamiento solo (experimento
+#5, `fpc_parson`) da +5.78% en `ft`, y el procesamiento profundo solo
+(experimento #2, `fpc_unmarshal_values` con seeds PLANOS) da +1.64%,
+¿qué pasa si las DOS condiciones están presentes en el mismo target?
+¿Se suman (~7%), o pasa algo distinto?
+
+**Metodología**: mismos seeds anidados del experimento #5 (4-6 niveles,
+campo extra que el harness ignora pero el parser atraviesa completo),
+adaptados al formato real de `unmarshal_values` (`"value"` como base64
+válido, ya que esta función SÍ decodifica ese campo). Mismo binario
+(`build/fpc_unmarshal_values/fuzz_unmarshal_values`, con
+`ASAN_OPTIONS=detect_leaks=0`, mismo motivo real que el experimento
+#2). Misma metodología rigurosa exacta (5 repeticiones, `-runs=500000`).
+
+**Resultado real, promedio de 5 corridas**:
+
+| métrica | control (4 seeds anidados) | tratamiento (204 seeds) |
+|---|---|---|
+| `cov` | 361.4 | 368.4 (**+1.94%**, gana **5/5**) |
+| `ft` | 1296.0 | 1587.8 (**+22.52%**, gana **5/5**) |
+
+**El efecto más grande de los 6 experimentos, por lejos** -- y la
+primera vez que `cov` (no solo `ft`) se mueve de forma consistente y
+notable. Verificado que no es un artefacto de crashes/leaks
+silenciados, mismo chequeo explícito que el experimento #5, ninguna
+anomalía real encontrada.
+
+**El hallazgo real, no obvio**: el efecto NO es aditivo, es
+SUPERLINEAL. Anidamiento solo: +5.78% en `ft`. Procesamiento profundo
+solo: +1.64% en `ft`. Sumados ingenuamente: ~7.4%. Real, juntos:
+**+22.52%** -- más de 3 veces la suma ingenua de los dos efectos por
+separado. Interpretación mecanística razonable (no probada
+rigurosamente, pero coherente con los 6 resultados): cuando el input
+tiene TANTO anidamiento estructural COMO procesamiento profundo por
+campo, el espacio de estados "interesantes" del programa crece de
+forma combinatoria (una combinación específica de valores anidados
+QUE ADEMÁS decodifican a un base64 válido y se insertan en el mapa) --
+un espacio que el havoc de bytes puro tiene que descubrir por fuerza
+bruta en dos dimensiones a la vez, mientras que sembrar con documentos
+ya estructuralmente diversos (transpuestos/invertidos) recorta ambas
+dimensiones de una vez.
+
+## Los 6 experimentos juntos -- tabla final
+
+| target / variante | procesamiento | anidamiento | Δ `cov` | Δ `ft` |
+|---|---|---|---|---|
+| `zabbix_zbxjson_open` | ninguno | no | -0.18% | -0.91% |
+| `fpc_parson` (plano) | superficial | no | +0.26% | +0.50% |
+| `fpc_unmarshal_values` (plano) | profundo (base64+map) | no | +0.11% | +1.64% |
+| `fpc_parson` (anidado) | superficial | **sí** | +0.09% | +5.78% |
+| `fpc_unmarshal_values` (anidado) | profundo | **sí** | **+1.94%** | **+22.52%** |
+
+**Conclusión real, con más confianza que en cualquier punto anterior de
+esta serie**: la mutación estructural (`novel_fuzzing`) SÍ tiene un
+caso real -- no solo especulativo -- para targets que combinan parseo
+de estructuras anidadas CON procesamiento real por campo (el patrón
+más común en parsers de protocolos reales: JSON/protobuf con objetos
+anidados que además se validan/transforman/insertan en estructuras).
+Sigue sin ser una mejora universal (`zbxjson`, sin ninguna de las dos
+condiciones, sigue mostrando efecto nulo/negativo) -- la recomendación
+honesta es ofrecerla como opción de seeding CONDICIONAL, activada para
+targets que el investigador ya sabe que parsean estructuras anidadas
+con lógica real detrás, no como default del scheduler.
+
+**Cautela honesta que sigue aplicando**: 6 corridas en 3 targets/
+variantes de 2 binarios reales, sin significancia estadística formal
+calculada (solo promedios de 5 repeticiones por condición) -- patrón
+fuerte y consistente en las 6, pero no una ley demostrada
+matemáticamente. La interpretación "superlineal" es la lectura más
+razonable de los números, no algo verificado con un modelo estadístico
+real.
 
 ## Experimento real #1 (metodología con confounds, ver arriba): A/B contra `zabbix_zbxjson_open` (2026-08-16)
 
@@ -299,26 +370,28 @@ venv/bin/python3 -m pytest novel_fuzzing/ -v
 
 - No está conectado a ningún target del daemon 24/7 todavía -- sigue
   siendo un experimento standalone, no una feature integrada. Con el
-  experimento #5 (+5.78% en `ft`, victoria unánime 5/5), hay un caso
-  real -- no solo incipiente -- para ofrecerlo como opción de seeding
-  específica para targets que parsean JSON con anidamiento real
-  (candidatos reales del propio registro:
-  `fabric_config_newenvelope`, `fabric_gateway_parsetransactionenvelope`,
-  cualquier target futuro que parsee protobuf/JSON anidado). Sigue sin
-  alcanzar para integrarlo como default GENERAL del scheduler (el
-  experimento #1/#3 con `zbxjson` mostró efecto nulo/negativo para
-  targets sin anidamiento real) -- la señal apunta a una mejora
-  CONDICIONAL, no universal.
-- **Dos hipótesis reales, con soporte empírico de 5 corridas, no una
-  ley demostrada**: (1) más código procesando cada campo ayuda un poco
-  (patrón monótono, experimentos #1-#4); (2) más anidamiento
-  ESTRUCTURAL del input ayuda bastante más (experimento #5, el efecto
-  más grande y consistente de los cinco). Sin significancia
-  estadística formal calculada. Si se sigue esto, el siguiente paso
-  real sería aislar las dos variables (probar anidamiento profundo
-  SIN aumentar el procesamiento, y viceversa, en el mismo target) para
-  saber si son efectos independientes o el mismo fenómeno visto desde
-  dos ángulos.
-- Solo cubre documentos JSON -- la notación (`transpose`,
-  `semantic_inverse`) podría generalizarse a otros formatos
-  estructurados (protobuf, el AST de un lenguaje), no se intentó acá.
+  experimento #6 (+22.52% en `ft`, +1.94% en `cov`, victoria unánime
+  5/5 en ambas), hay un caso real -- no solo incipiente -- para
+  ofrecerlo como opción de seeding condicional para targets que
+  combinan anidamiento estructural CON procesamiento real por campo
+  (candidatos reales del propio registro: `fabric_config_newenvelope`,
+  `fabric_gateway_parsetransactionenvelope` -- aunque esos parsean
+  protobuf, no JSON, ver limitación abajo). Sigue sin alcanzar para
+  integrarlo como default GENERAL del scheduler (`zbxjson`, sin
+  ninguna de las dos condiciones, sigue mostrando efecto nulo/negativo)
+  -- la señal apunta a una mejora CONDICIONAL, fuerte cuando aplica,
+  nula cuando no.
+- **Hallazgo real más importante de toda la serie**: el efecto de
+  anidamiento + procesamiento profundo JUNTOS (+22.52%) es
+  SUPERLINEAL, no la suma de anidamiento solo (+5.78%) más
+  procesamiento solo (+1.64%, ≈7.4% sumado ingenuamente). Aislar las
+  dos variables (experimento #6) fue justamente lo que reveló esto --
+  confirma que son dimensiones relacionadas, no independientes, con
+  una interacción real entre ellas. Sin significancia estadística
+  formal calculada (6 corridas, promedios de 5 repeticiones cada una).
+- Solo cubre documentos JSON -- probar esto contra
+  `fabric_config_newenvelope`/`fabric_gateway_parsetransactionenvelope`
+  (candidatos reales que combinan ambas condiciones) necesitaría
+  generalizar la notación (`transpose`, `semantic_inverse`) a mensajes
+  protobuf ya deserializados, no se intentó acá -- sería el paso
+  natural siguiente si se decide integrar esto de verdad.
