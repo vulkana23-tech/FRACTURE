@@ -225,5 +225,15 @@
     "known_finding": false,
     "state": {},
     "generated_by": "harness_gen/generate_go_harness.py (qwen3-coder:30b, 3 intentos -- 2 fallos reales de 'package main' vs 'package chaincode')"
+  },
+  {
+    "id": "cbmpc_bits_convert",
+    "engine": "c",
+    "binary": "/opt/fracture/build/cbmpc_bits_convert/fuzz_bits_convert",
+    "corpus_dir": "/opt/fracture/build/cbmpc_bits_convert/corpus",
+    "artifact_dir": "/opt/fracture/build/cbmpc_bits_convert/crashes",
+    "known_finding": false,
+    "state": {},
+    "generated_by": "manual (find_patch_directed_candidates.py encontro el candidato real, harness escrito a mano)"
   }
 ]
