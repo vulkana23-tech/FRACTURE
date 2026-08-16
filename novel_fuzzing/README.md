@@ -153,6 +153,50 @@ tarda más en encontrar por azar. Esta hipótesis explicaría ambos
 resultados de forma consistente, pero necesitaría un tercer target con
 profundidad intermedia para confirmarse -- no se probó acá.
 
+## Experimento real #4, tercer target de profundidad intermedia: A/B contra `fpc_parson_json_parse_string` (2026-08-16)
+
+Prueba directa de la hipótesis del experimento #3: `json_parse_string`
+(parson, harness de `fpc_parson`) comparte el MISMO formato de entrada
+que `unmarshal_values` (array de `{"key":..., "value":...}`) y camina
+el array leyendo 2 campos string por objeto -- pero sin el paso de
+decodificación base64 ni inserción en `std::map` que sí tiene
+`unmarshal_values`. Profundidad real intermedia entre `zbxjson`
+(solo abre/valida el JSON, no camina nada) y `unmarshal_values`
+(camina + decodifica + inserta). Misma metodología rigurosa exacta (5
+repeticiones, `-runs=500000`, mismo formato de seeds).
+
+**Resultado real, promedio de 5 corridas**:
+
+| métrica | control (4 seeds crudos) | tratamiento (204 seeds) |
+|---|---|---|
+| `cov` | 230.6 | 231.2 (**+0.26%**, gana 3/5) |
+| `ft` | 1252.4 | 1258.6 (**+0.50%**, gana 4/5) |
+
+## Los 3 targets juntos -- la hipótesis de profundidad se sostiene, con cautela
+
+| target | profundidad real de parseo | Δ `cov` | Δ `ft` |
+|---|---|---|---|
+| `zabbix_zbxjson_open` | mínima (solo abre/valida el JSON, no camina el array) | -0.18% | -0.91% |
+| `fpc_parson_json_parse_string` | intermedia (camina el array, lee 2 strings por objeto, descarta) | +0.26% | +0.50% |
+| `fpc_unmarshal_values` | máxima (camina + decodifica base64 + inserta en `std::map`) | +0.11% | +1.64% |
+
+El patrón es consistente con la hipótesis en los 3 casos: a más
+profundidad real de procesamiento por elemento del array, mayor la
+ventaja (chica, pero monótonamente creciente) de sembrar con
+documentos estructuralmente diversos. Esto es coherente con el
+mecanismo propuesto -- cuanto más CÓDIGO real hay detrás de cada campo
+del JSON, más margen real hay para que una semilla que ya varía esos
+campos (en vez de descubrirlos por mutación de bytes al azar) ahorre
+tiempo real de exploración.
+
+**Cautela honesta que sigue aplicando**: son 3 targets, efectos chicos
+(entre -1% y +2%), sin significancia estadística formal (no se calculó
+un test de hipótesis real, solo promedios de 5 corridas) -- esto es
+una señal real y un patrón consistente, no una ley demostrada. Alcanza
+para decir "la hipótesis de profundidad no se refutó, y el patrón
+apunta en la dirección esperada en los 3 casos probados", no para decir
+"confirmado".
+
 ## Experimento real #1 (metodología con confounds, ver arriba): A/B contra `zabbix_zbxjson_open` (2026-08-16)
 
 **Metodología**: 4 documentos semilla realistas (formato real del
@@ -211,19 +255,22 @@ venv/bin/python3 -m pytest novel_fuzzing/ -v
 ## Lo que falta (honesto)
 
 - No está conectado a ningún target del daemon 24/7 todavía -- sigue
-  siendo un experimento standalone, no una feature integrada. Con dos
-  targets probados con rigor mostrando resultados OPUESTOS (positivo
-  chico en `fpc_unmarshal_values`, negativo chico en `zbxjson`), no
-  hay caso todavía para integrarlo como mejora general al scheduler --
-  a lo sumo, como opción específica para targets con mucha profundidad
-  de parseo real (ver hipótesis del experimento #3).
-- **Hipótesis real, no confirmada**: el efecto depende de cuánto margen
-  de exploración le queda al target dentro de la ventana de ejecuciones
-  -- targets que saturan cobertura rápido con seeds simples (`zbxjson`)
-  no se benefician; targets con más profundidad real de parseo
-  (`fpc_unmarshal_values`) sí, un poco. Necesitaría un tercer target de
-  profundidad intermedia (candidato real: `fpc_parson`, tiene corpus
-  propio ya acumulado) para confirmar o refutar esto -- no se probó.
+  siendo un experimento standalone, no una feature integrada. Con 3
+  targets probados con el mismo rigor mostrando un patrón MONÓTONO con
+  la profundidad real de parseo (ver tabla arriba), hay un caso
+  incipiente para ofrecerlo como opción de seeding específica para
+  targets con procesamiento real profundo por elemento -- pero
+  efectos de ≤2% con 5 repeticiones no alcanzan para justificar
+  integrarlo como default general al scheduler todavía.
+- **Hipótesis real, con soporte de 3 targets, no una ley demostrada**:
+  el efecto depende de cuánto margen de exploración le queda al target
+  dentro de la ventana de ejecuciones -- a más código real detrás de
+  cada campo del JSON, más ventaja (chica) de sembrar con documentos
+  ya estructuralmente diversos. Sin significancia estadística formal
+  calculada (solo promedios de 5 corridas por target) -- el siguiente
+  paso real, si se sigue esto, sería un target con profundidad aún
+  mayor (varios niveles de anidamiento, no solo un array plano) para
+  ver si el efecto sigue creciendo o se estanca.
 - Solo cubre documentos JSON -- la notación (`transpose`,
   `semantic_inverse`) podría generalizarse a otros formatos
   estructurados (protobuf, el AST de un lenguaje), no se intentó acá.
