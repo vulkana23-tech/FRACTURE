@@ -204,9 +204,48 @@ límite sin autenticar.
   hizo en esta ronda, la señal actual (barata, 5/8 reales) sigue
   siendo mejor que nada, con este límite documentado.
 - ~~`find_patch_directed_candidates.py` no está conectado todavía a
-  `harness_gen/`~~ **cerrado (2026-08-15)**: `patch_directed_go_harness.py`
-  conecta ambos para candidatos Go, probado en vivo contra
-  `hyperledger/fabric` -- ver arriba. Solo cubre Go (`generate_go_harness.py`);
-  no hay equivalente para C/C++ (`generate_harness.py` sigue sin loop
-  de validación real, ver `harness_gen/README.md`) ni para Rust
-  (`harness_gen/` tampoco tiene generador de Rust todavía).
+  `harness_gen/`~~ **cerrado (2026-08-15/16)**: `patch_directed_go_harness.py`
+  (Go), `patch_directed_rust_harness.py` (Rust) y `patch_directed_jvm_harness.py`
+  (JVM) conectan el pipeline completo, todos probados en vivo contra
+  repos reales -- ver `harness_gen/README.md` para el detalle de cada
+  uno. C/C++ sigue siendo manual (`generate_harness.py` ya tiene loop
+  de validación real desde 2026-08-16, pero sin pipeline automático de
+  patch-directed todavía -- los 2 targets de C/C++ encontrados esta
+  ronda se armaron a mano porque el contexto ya estaba investigado a
+  fondo).
+
+## Barrido completo del scope real de SPECTRE (2026-08-16)
+
+Corridos los 15 candidatos reales que devuelve `select_targets.py`
+(tier 1 + tier 2, scope de bounty real) contra
+`find_patch_directed_candidates.py`, uno por uno, con criterio humano
+sobre cada resultado en vez de generar harnesses ciegamente:
+
+| Repo | Resultado real |
+|---|---|
+| `cloudflare/workerd` | 8 commits, 3 investigados a fondo -> bugs de lifecycle V8/JS, no fuzzeable con harness bytes->función (ver arriba) |
+| `coinbase/cb-mpc` | 2 targets registrados (`cbmpc_bits_convert`, converter previo), campañas reales limpias |
+| `hyperledger/fabric-contract-api-go` | 1 candidato, pero es ruido: bump de dependencia npm (`form-data` CVE-2025-7783), no código Go propio |
+| `hyperledger/fabric-chaincode-go` | 0 commits de seguridad en 400 días |
+| `hyperledger/fabric-samples` | 2 targets nuevos (`add`/`sub` overflow en chaincode token ERC20) |
+| `hyperledger/fabric-ca` | 0 candidatos (verificado en ronda anterior, 4 años de historial) |
+| `hyperledger/fabric-admin-sdk` | 0 commits de seguridad nuevos (ya tiene 1 target por otra vía) |
+| `hyperledger/fabric-lib-go` | 1 candidato real (`8fe16c9967`, fix de **race condition** con `atomic.Pointer`) -- **no fuzzeable con libFuzzer**, es un bug de concurrencia, no de parseo de bytes |
+| `hyperledger/fabric-private-chaincode` | memory leak real encontrado y documentado (`unmarshal_values`) |
+| `hyperledger/fabric-config` | 0 commits de seguridad nuevos (ya tiene 1 target por otra vía) |
+| `hyperledger/fabric-protos-go` | 0 commits de seguridad |
+| `hyperledger/fabric-protos-go-apiv2` | 0 candidatos reales, solo bumps de dependencias |
+| `coinbase/cb-mpc-go` | 1 candidato real (`72eca12622`, mTLS hardening -- reemplaza un peer-ID leído directo del wire sin atar criptográficamente por verificación de SAN del certificado, buen fix real) -- pero **código muerto**: el paquete `pkg/cbmpc/transport/mtls` entero fue eliminado en un refactor posterior (`b10edd5`, "cb-mpc-v0.2.0"), no vale la pena un harness para código que ya no existe en HEAD |
+| `hyperledger/fabric-cli` | 0 commits de seguridad (1200 días de historial) |
+| `hyperledger/fabric-amcl` | 0 commits de seguridad nuevos (ya tiene 1 target por otra vía) |
+
+**Conclusión real**: de 15 repos del scope, 11 no aportaron candidatos
+nuevos fuzzeables (0 commits, ruido de dependencias, código muerto, o
+bug de concurrencia fuera del alcance de libFuzzer). Los 4 que sí
+aportaron (`cb-mpc`, `fabric-samples`, `fabric-private-chaincode`, y el
+histórico `fabric-ca`→`workerd` de rondas previas) ya están cubiertos
+con targets reales en `orchestrator/targets.json`. El scope actual de
+SPECTRE está efectivamente agotado para esta técnica -- la próxima
+ronda de descubrimiento necesita ampliar el scope (nuevos programas de
+bounty) o cambiar de técnica (ver limitaciones de `git show`
+documentadas arriba).
