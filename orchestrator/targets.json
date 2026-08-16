@@ -203,5 +203,27 @@
     "known_finding": false,
     "state": {},
     "generated_by": "harness_gen/generate_jvm_harness.py (qwen3-coder:30b, 1 intento con reglas mejoradas)"
+  },
+  {
+    "id": "fabric_samples_token_erc20_sub",
+    "engine": "go",
+    "repo": "https://github.com/hyperledger/fabric-samples",
+    "package_path": "token-erc-20/chaincode-go/chaincode",
+    "fuzz_test_file": "/opt/fracture/orchestrator/fuzz_tests/fabric_samples_token_erc20_sub_test.go",
+    "fuzz_func": "FuzzSub",
+    "known_finding": false,
+    "state": {},
+    "generated_by": "targets/patch_directed_go_harness.py (qwen3-coder:30b, 1 intento)"
+  },
+  {
+    "id": "fabric_samples_token_erc20_add",
+    "engine": "go",
+    "repo": "https://github.com/hyperledger/fabric-samples",
+    "package_path": "token-erc-20/chaincode-go/chaincode",
+    "fuzz_test_file": "/opt/fracture/orchestrator/fuzz_tests/fabric_samples_token_erc20_add_test.go",
+    "fuzz_func": "FuzzAdd",
+    "known_finding": false,
+    "state": {},
+    "generated_by": "harness_gen/generate_go_harness.py (qwen3-coder:30b, 3 intentos -- 2 fallos reales de 'package main' vs 'package chaincode')"
   }
 ]
