@@ -73,6 +73,32 @@ _PLATEAU_CYCLES = 3
 # saltan (sweep_number % 3 != 0).
 _PLATEAU_SKIP_MODULO = 3
 
+# Decision real (2026-08-16, sesion de "por que no encontramos ningun
+# zero-day reportable todavia" -- ver conversacion real, no un ajuste
+# especulativo): con 26 targets rotando parejo, ninguno tenia tiempo
+# real sostenido, y varios de los bugs reales que SI aparecieron
+# (fabric_amcl_dilithium_verify2 x3, rust_fil_proofs_fr32_write_unpadded)
+# ya estan confirmados como NO reportables -- se investigo reachability
+# real contra los consumidores de produccion conocidos (Lotus, Boost) y
+# no se encontro ningun camino externo que llegue hoy. Seguir
+# gastandoles el mismo tiempo que a un target con reachability YA
+# demostrada (fpc_parson/fpc_unmarshal_values: parsean bytes del host
+# NO CONFIABLE dentro de un enclave SGX real; zabbix_zbxjson_open:
+# primer parser real de bytes de red del protocolo trapper) es peor
+# uso del mismo presupuesto de CPU real.
+#
+# "priority" es un campo NUEVO y OPCIONAL en targets.json (default
+# "normal" si no esta seteado -- ningun target existente se rompe por
+# no tenerlo). "high" multiplica la duracion real del ciclo -- pasa MAS
+# tiempo fuzzeando de una sola vez, que es lo que de verdad ayuda a
+# romper un plateau de cobertura en un target maduro. "low" NUNCA se
+# saca del todo (mismo principio que el plateau de arriba: un bug real
+# es real aunque hoy no sea reportable, y la reachability de un
+# consumidor real puede cambiar) pero corre mucho menos seguido.
+_HIGH_PRIORITY_DURATION_MULTIPLIER = 3
+# De cada 6 sweeps, un target de prioridad baja corre solo 1.
+_LOW_PRIORITY_SKIP_MODULO = 6
+
 _RUST_COV_RE = re.compile(r"cov:\s*(\d+)")
 _GO_NEW_INTERESTING_RE = re.compile(r"new interesting:\s*(\d+)")
 _GO_EXECS_RE = re.compile(r"execs:\s*(\d+)")
@@ -325,23 +351,40 @@ def _run_target_safely(target: dict, duration_seconds: int, workers: int) -> Non
                  target["id"], n_crashes, target["state"].get("plateau_streak", 0))
 
 
+def _duration_for(target: dict, base_duration_seconds: int) -> int:
+    if target.get("priority") == "high":
+        return base_duration_seconds * _HIGH_PRIORITY_DURATION_MULTIPLIER
+    return base_duration_seconds
+
+
 def run_sweep(targets: list, sweep_number: int, duration_seconds: int,
               max_concurrent: int, cores: int) -> None:
     workers = max(1, cores // max_concurrent)
     scheduled = []
     for t in targets:
         state = t.get("state", {})
+        priority = t.get("priority")
+        if priority == "low" and sweep_number % _LOW_PRIORITY_SKIP_MODULO != 0:
+            logging.info("Salteo %s esta sweep (prioridad baja -- bug real confirmado pero "
+                         "sin reachability conocida hoy, corre 1 de cada %d sweeps)",
+                         t["id"], _LOW_PRIORITY_SKIP_MODULO)
+            continue
         if _is_plateaued(state) and sweep_number % _PLATEAU_SKIP_MODULO != 0:
             logging.info("Salteo %s esta sweep (estancado, corre 1 de cada %d sweeps)",
                          t["id"], _PLATEAU_SKIP_MODULO)
             continue
         scheduled.append(t)
 
-    logging.info("=== Sweep #%d: %d/%d targets, %d en paralelo, %d workers c/u, %ds c/u ===",
-                 sweep_number, len(scheduled), len(targets), max_concurrent, workers, duration_seconds)
+    logging.info("=== Sweep #%d: %d/%d targets, %d en paralelo, %d workers c/u, %ds base "
+                 "(x%d si priority=high) ===",
+                 sweep_number, len(scheduled), len(targets), max_concurrent, workers,
+                 duration_seconds, _HIGH_PRIORITY_DURATION_MULTIPLIER)
 
     with ThreadPoolExecutor(max_workers=max_concurrent) as pool:
-        futures = {pool.submit(_run_target_safely, t, duration_seconds, workers): t for t in scheduled}
+        futures = {
+            pool.submit(_run_target_safely, t, _duration_for(t, duration_seconds), workers): t
+            for t in scheduled
+        }
         for fut in as_completed(futures):
             fut.result()  # _run_target_safely ya atrapa sus propias excepciones -- esto solo re-lanza bugs del scheduler mismo
 

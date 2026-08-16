@@ -53,6 +53,7 @@
     "crate_dir": "/opt/fracture/build/rust_targets/rust-fil-proofs/fr32",
     "target": "write_unpadded",
     "known_finding": true,
+    "priority": "low",
     "state": {}
   },
   {
@@ -71,6 +72,7 @@
     "fuzz_test_file": "/opt/fracture/orchestrator/fuzz_tests/dilithium_verify_test.go",
     "fuzz_func": "FuzzDLVerify2",
     "known_finding": true,
+    "priority": "low",
     "state": {}
   },
   {
@@ -151,6 +153,7 @@
     "corpus_dir": "/opt/fracture/build/fpc_parson/corpus",
     "artifact_dir": "/opt/fracture/build/fpc_parson/crashes",
     "known_finding": true,
+    "priority": "high",
     "state": {}
   },
   {
@@ -160,6 +163,7 @@
     "corpus_dir": "/opt/fracture/build/zabbix_zbxjson/corpus",
     "artifact_dir": "/opt/fracture/build/zabbix_zbxjson/crashes",
     "known_finding": false,
+    "priority": "high",
     "state": {}
   },
   {
@@ -170,6 +174,7 @@
     "artifact_dir": "/opt/fracture/build/fpc_unmarshal_values/crashes",
     "extra_asan_options": "detect_leaks=0",
     "known_finding": true,
+    "priority": "high",
     "state": {}
   },
   {
