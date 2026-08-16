@@ -284,6 +284,17 @@ real es sólido. Registrado como target 26
 `targets/test_patch_directed_c_harness.py` (incluye el caso de
 regresión real).
 
+**Nota honesta de scope (2026-08-16)**: `cJSON` se usó porque ya era el
+ejemplo de referencia de `generate_harness.py` (librería chica
+amalgamada, caso ideal para el generador) -- pero verificado en vivo
+contra la base real de SPECTRE, `cJSON` **no aparece en ningún programa
+watched** del scope de bounty actual. Este target 26 es una validación
+de infraestructura real, no un target bounty-accionable -- se mantiene
+corriendo igual (encontrar un bug de memoria real ahí seguiría
+mereciendo disclosure responsable upstream, cJSON lo usan miles de
+proyectos), pero documentado para que no se confunda con los otros 25
+targets, todos derivados del scope real watched de SPECTRE.
+
 ## Barrido completo del scope real de SPECTRE (2026-08-16)
 
 Corridos los 15 candidatos reales que devuelve `select_targets.py`

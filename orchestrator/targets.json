@@ -244,6 +244,6 @@
     "artifact_dir": "/opt/fracture/build/cjson_setnumberhelper/crashes",
     "known_finding": false,
     "state": {},
-    "generated_by": "targets/patch_directed_c_harness.py (primer pipeline C/C++ dirigido por parche, IA via Ollama, primer intento real)"
+    "generated_by": "targets/patch_directed_c_harness.py (validacion end-to-end del pipeline C/C++ nuevo, primer intento real exitoso post-fix). NOTA HONESTA: cJSON NO aparece en el scope watched real de SPECTRE (verificado en vivo, 2026-08-16) -- este target no es bounty-accionable, se mantiene por exploracion continua y disclosure responsable upstream si aparece algo real, no por expectativa de recompensa."
   }
 ]
