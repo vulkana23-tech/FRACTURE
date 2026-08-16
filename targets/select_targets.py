@@ -18,10 +18,19 @@ from typing import Dict, List, Optional
 import psycopg2
 import requests
 
-from config import SPECTRE_DATABASE_URL
+from config import GITHUB_TOKEN, SPECTRE_DATABASE_URL
 
 _TIMEOUT = 15
-_PACE_SECONDS = 0.5  # buen ciudadano contra la API publica de GitHub (rate limit real sin auth: 60/hora)
+_PACE_SECONDS = 0.5  # buen ciudadano contra la API publica de GitHub (rate limit real sin auth: 60/hora, con GITHUB_TOKEN: 5000/hora)
+
+
+def _github_api_headers() -> Dict[str, str]:
+    """Sin GITHUB_TOKEN seteado, headers vacios -- sigue funcionando
+    igual, solo con el rate limit sin autenticar (60/hora). Nunca se
+    loggea ni se imprime el token en ningun lado."""
+    if not GITHUB_TOKEN:
+        return {}
+    return {"Authorization": f"Bearer {GITHUB_TOKEN}"}
 
 # Tier 1: lenguajes donde fuzzing tradicionalmente encuentra bugs de
 # memoria reales (el tipo de hallazgo que paga bounties grandes).
@@ -62,7 +71,7 @@ def _github_repo_info(repo_url: str) -> Optional[Dict]:
         return None
     path = repo_url.split("github.com/", 1)[1].rstrip("/")
     try:
-        resp = requests.get(f"https://api.github.com/repos/{path}", timeout=_TIMEOUT)
+        resp = requests.get(f"https://api.github.com/repos/{path}", headers=_github_api_headers(), timeout=_TIMEOUT)
     except requests.RequestException:
         return None
     if resp.status_code != 200:

@@ -159,14 +159,27 @@ adentro. Vale la pena, en algún momento, auditar el resto
 asumir que un README desactualizado significa que hay que empezar de
 cero -- leer el código primero.
 
+## `GITHUB_TOKEN` (2026-08-16)
+
+`select_targets.py` ya acepta un `GITHUB_TOKEN` opcional (fine-grained
+PAT, **solo lectura pública**, generado por el usuario específicamente
+para esto -- nunca se reusó el token de push de Vigia de una ronda
+anterior, a propósito: un token de solo-lectura-pública tiene mucho
+menos blast radius si se filtra que uno con permiso de escritura).
+Confirmado en vivo: `5000` req/hora reales con el token vs `60` sin
+él. Se lee desde `.env` (gitignoreado, `chmod 600`) vía un loader
+mínimo agregado a `targets/config.py` -- sin agregar `python-dotenv`
+como dependencia nueva, nunca pisa una variable ya seteada de verdad
+en el entorno. Sin el token, todo sigue funcionando igual, solo con el
+límite sin autenticar.
+
 ## Lo que falta (honesto)
 
 - No hay heurística de "qué PATHS específicos tocó el push reciente"
-  (parsers/serializers vs. CI/docs) -- eso sí necesitaría una llamada
-  extra por repo (`/commits`) y comerse el rate limit más rápido. Con
-  un `GITHUB_TOKEN` real (5000/hora en vez de 60) dejaría de ser un
-  problema, pero eso requiere que el usuario decida configurar uno,
-  no se asumió ni se generó ningún token en esta ronda.
+  (parsers/serializers vs. CI/docs) -- con el rate limit real ya en
+  5000/hora esto dejó de ser el problema (ver arriba), pero la
+  heurística en sí (qué extensión de archivo prioriza mejor un
+  candidato) no se implementó todavía.
 - ~~No distingue la FORMA del bug~~ **implementado (2026-08-15)**:
   `_looks_js_engine_lifecycle_bound()` marca un candidato si el
   contexto del hunk (heurística de `git show`) menciona
