@@ -237,14 +237,52 @@ límite sin autenticar.
   (incluye el caso de regresión real del macro).
 - ~~`find_patch_directed_candidates.py` no está conectado todavía a
   `harness_gen/`~~ **cerrado (2026-08-15/16)**: `patch_directed_go_harness.py`
-  (Go), `patch_directed_rust_harness.py` (Rust) y `patch_directed_jvm_harness.py`
-  (JVM) conectan el pipeline completo, todos probados en vivo contra
-  repos reales -- ver `harness_gen/README.md` para el detalle de cada
-  uno. C/C++ sigue siendo manual (`generate_harness.py` ya tiene loop
-  de validación real desde 2026-08-16, pero sin pipeline automático de
-  patch-directed todavía -- los 2 targets de C/C++ encontrados esta
-  ronda se armaron a mano porque el contexto ya estaba investigado a
-  fondo).
+  (Go), `patch_directed_rust_harness.py` (Rust), `patch_directed_jvm_harness.py`
+  (JVM) y `patch_directed_c_harness.py` (C, último en cerrarse) conectan
+  el pipeline completo para los 4 lenguajes, todos probados en vivo
+  contra repos reales -- ver `harness_gen/README.md` para el detalle de
+  cada uno.
+
+## `patch_directed_c_harness.py` -- pipeline automático para C (2026-08-16)
+
+Conecta `find_patch_directed_candidates.py` con
+`harness_gen/generate_harness.py` para C: extrae el nombre de función
+real del contexto de hunk (git + AST, ver arriba) con una regex de
+firma de C (`identificador(` -- toma el ÚLTIMO match, no el primero,
+para no confundirse con macros de calificador de retorno tipo
+`CJSON_PUBLIC(tipo) nombre_real(...)`), deriva el nombre de header real
+del archivo `.c`/`.h` tocado (`cJSON.c` -> `cJSON.h`), y prueba
+combinaciones función×header, priorizando firmas con superficie de
+bytes real (`const char*`, `uint8_t*`, etc.) -- mismo criterio que
+Go/Rust/JVM. Limitación heredada de `generate_harness.py`, no de este
+pipeline: solo cubre librerías chicas amalgamadas en 1-2 archivos
+(header + `.c` del mismo nombre base), un candidato de un proyecto
+grande y multi-archivo simplemente falla la validación real (fuentes
+no encontradas) y se descarta -- resultado honesto, no un bug.
+
+**Resultado real contra `DaveGamble/cJSON`** (7 commits de seguridad
+reales encontrados, 2000 días de historial): **bug real encontrado en
+el primer intento en vivo** -- el commit `b2890c8d76` ("prevent NULL
+pointer dereference in cJSON_SetNumberHelper") también toca
+`tests/misc_tests.c` (convención real de cJSON: test en el mismo
+commit que el fix), y el contexto de un hunk ahí
+(`cjson_functions_should_not_crash_with_null_pointers`, una función de
+TEST) se coló como candidato ANTES que la función real del fix en la
+lista. El modelo, con buen criterio, ignoró el nombre inexistente en
+el header y generó un harness igual -- VÁLIDO (compiló, corrió, sin
+crash), pero fuzzeando `cJSON_Parse` en general, no
+`cJSON_SetNumberHelper`. Mismo tipo de limitación que el caso `Ready()`
+de Go (ver abajo): "compila y corre" no es lo mismo que "harnessea lo
+que se pidió". Corregido con `_LOOKS_LIKE_TEST_FUNCTION_RE` (filtro
+barato por nombre, mismo espíritu que `_JS_ENGINE_LIFECYCLE_MARKER_RE`)
+-- con el fix, `cJSON_SetNumberHelper` sobrevive y el pipeline generó
+un harness real y correcto en el primer intento. Campaña real de
+validación (30s, 4 workers): ~107M ejecuciones, sin crash -- el fix
+real es sólido. Registrado como target 26
+(`cjson_setnumberhelper`). Ver
+`findings/2026-08-16_cjson_setnumberhelper_clean.md` y
+`targets/test_patch_directed_c_harness.py` (incluye el caso de
+regresión real).
 
 ## Barrido completo del scope real de SPECTRE (2026-08-16)
 

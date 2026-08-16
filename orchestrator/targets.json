@@ -235,5 +235,15 @@
     "known_finding": false,
     "state": {},
     "generated_by": "manual (find_patch_directed_candidates.py encontro el candidato real, harness escrito a mano)"
+  },
+  {
+    "id": "cjson_setnumberhelper",
+    "engine": "c",
+    "binary": "/opt/fracture/build/cjson_setnumberhelper/fuzz_setnumberhelper",
+    "corpus_dir": "/opt/fracture/build/cjson_setnumberhelper/corpus",
+    "artifact_dir": "/opt/fracture/build/cjson_setnumberhelper/crashes",
+    "known_finding": false,
+    "state": {},
+    "generated_by": "targets/patch_directed_c_harness.py (primer pipeline C/C++ dirigido por parche, IA via Ollama, primer intento real)"
   }
 ]
