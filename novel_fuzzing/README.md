@@ -113,6 +113,46 @@ encuentra código nuevo más rápido en esta ventana de ejecuciones. Un
 efecto real pero modesto, medido con rigor -- no una demostración
 contundente de la idea, tampoco su descarte.
 
+## Experimento real #3, misma metodología corregida: A/B contra `zabbix_zbxjson_open` (2026-08-16)
+
+Pregunta real que quedó abierta después del experimento #2: ¿el efecto
+chico y positivo en `ft` generaliza a otro parser JSON, o es específico
+de `fpc_unmarshal_values`? Misma metodología rigurosa (5 repeticiones,
+`-runs=500000` exactas, seeds realistas del protocolo trapper de
+Zabbix) aplicada de nuevo contra `zabbix_zbxjson_open` -- el mismo
+target del experimento #1, pero esta vez sin los confounds de tiempo de
+pared ni el bug de crecimiento del generador.
+
+**Resultado real, promedio de 5 corridas**:
+
+| métrica | control (4 seeds crudos) | tratamiento (204 seeds) |
+|---|---|---|
+| `cov` | 217.6 | 217.2 (**-0.18%**) |
+| `ft` | 880.0 | 872.0 (**-0.91%**) |
+
+Acá el tratamiento **NO gana** -- prácticamente empatado en `cov`, y
+levemente NEGATIVO en `ft` (gana en solo 2 de 5 semillas en ambas
+métricas). El efecto positivo visto en `fpc_unmarshal_values` **no
+generaliza** a este target.
+
+**Conclusión honesta, comparando los dos targets con la misma
+metodología rigurosa**: el efecto de la mutación estructural no es
+universal -- depende del target. Hipótesis real, no comprobada, que
+surge de comparar ambos resultados: `zabbix_zbxjson_open` ya satura
+cobertura muy rápido con seeds realistas simples (el experimento #1
+mostró que 4 seeds crudos ya alcanzan `cov≈217` de un máximo cercano a
+`≈222` visto en corridas más largas -- casi todo el espacio explorable
+en esta ventana de ejecuciones ya está cubierto por el motor de
+cobertura de libFuzzer solo, sin importar qué tan diversas sean las
+semillas iniciales). `fpc_unmarshal_values` tiene más profundidad real
+de parseo (array anidado, decodificación base64, inserción en
+`std::map`) -- ahí sí queda margen real donde sembrar con documentos
+estructuralmente diversos (booleanos invertidos, campos transpuestos)
+ayuda a alcanzar combinaciones de estado que el havoc de bytes puro
+tarda más en encontrar por azar. Esta hipótesis explicaría ambos
+resultados de forma consistente, pero necesitaría un tercer target con
+profundidad intermedia para confirmarse -- no se probó acá.
+
 ## Experimento real #1 (metodología con confounds, ver arriba): A/B contra `zabbix_zbxjson_open` (2026-08-16)
 
 **Metodología**: 4 documentos semilla realistas (formato real del
@@ -171,15 +211,19 @@ venv/bin/python3 -m pytest novel_fuzzing/ -v
 ## Lo que falta (honesto)
 
 - No está conectado a ningún target del daemon 24/7 todavía -- sigue
-  siendo un experimento standalone, no una feature integrada. Con el
-  resultado real (efecto chico en `ft`, no en `cov`) todavía no
-  justifica el costo de integrarlo al scheduler sin antes probarlo
-  contra más targets.
-- El experimento #2 (5 repeticiones, iso-ejecuciones) es más riguroso
-  que el #1, pero sigue siendo UN target -- no se sabe si el efecto
-  chico en `ft` generaliza a otros parsers JSON del proyecto
-  (`fpc_parson`, `zbxjson`, `cJSON_setnumberhelper`) o es específico de
-  `unmarshal_values`.
+  siendo un experimento standalone, no una feature integrada. Con dos
+  targets probados con rigor mostrando resultados OPUESTOS (positivo
+  chico en `fpc_unmarshal_values`, negativo chico en `zbxjson`), no
+  hay caso todavía para integrarlo como mejora general al scheduler --
+  a lo sumo, como opción específica para targets con mucha profundidad
+  de parseo real (ver hipótesis del experimento #3).
+- **Hipótesis real, no confirmada**: el efecto depende de cuánto margen
+  de exploración le queda al target dentro de la ventana de ejecuciones
+  -- targets que saturan cobertura rápido con seeds simples (`zbxjson`)
+  no se benefician; targets con más profundidad real de parseo
+  (`fpc_unmarshal_values`) sí, un poco. Necesitaría un tercer target de
+  profundidad intermedia (candidato real: `fpc_parson`, tiene corpus
+  propio ya acumulado) para confirmar o refutar esto -- no se probó.
 - Solo cubre documentos JSON -- la notación (`transpose`,
   `semantic_inverse`) podría generalizarse a otros formatos
   estructurados (protobuf, el AST de un lenguaje), no se intentó acá.
