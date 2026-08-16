@@ -292,8 +292,16 @@ fuzzearon de verdad).
   no podría validar `zbxjson` solo, que necesita 5 archivos reales
   además del propio; ahí `--extra-source` sigue siendo manual).
 - `patch_directed_jvm_harness.py` no encontró todavía un candidato
-  real vivo (los otros 2 repos Java en scope, `fabric-sdk-java` y
-  `besu`, no tienen classpath persistente preparado todavía -- `besu`
-  además dio, en la búsqueda manual, candidatos que resultaron ser
-  código de test/reference-tests, no producción, mismo tipo de
-  descarte honesto que ya pasó con el candidato de `workerd`).
+  real vivo. `fabric-sdk-java`: 0 commits de seguridad en 2 años
+  (chequeado). `besu`: 4 candidatos reales revisados a mano, ninguno
+  sirve -- uno es código de reference-tests (no producción, mismo
+  descarte que `workerd`), uno es lógica sobre campos ya parseados
+  (`BlobGasValidationRule`, no bytes crudos), uno es sobre balance/gas
+  (lógica, no parseo), y el que más prometía por el título ("Fix an
+  error on eth_subscribe deserializing the block") resultó ser sobre
+  **serialización** (`ObjectMapper.writeValueAsString`, codificar una
+  respuesta), no deserialización de input no confiable -- el título
+  del commit real inducía a error. Ninguno de los 2 repos tiene
+  classpath persistente preparado todavía (`besu` es un build de
+  Gradle mucho más pesado que fabric-chaincode-java, no se armó en
+  esta ronda sin un candidato real que lo justifique).
