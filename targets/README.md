@@ -173,6 +173,67 @@ como dependencia nueva, nunca pisa una variable ya seteada de verdad
 en el entorno. Sin el token, todo sigue funcionando igual, solo con el
 límite sin autenticar.
 
+## `patch_directed_race_harness.py` -- pipeline para race conditions (2026-08-16)
+
+`find_patch_directed_candidates.py` ya encontraba commits reales de
+"race condition"/"data race"/"deadlock" (matchean `_SECURITY_KEYWORDS`)
+-- pero hasta ahora todos se descartaban como "no fuzzeable con
+libFuzzer" (caso real `hyperledger/fabric-lib-go`, commit `8fe16c9967`,
+"Use atomic.Pointer to prevent race condition in bccsp.Factory").
+Cierto para fuzzing de bytes -- pero Go trae su PROPIO detector de
+razas (`go test -race`, basado en ThreadSanitizer) que sí puede
+encontrar una carrera real ejercitando el código bajo concurrencia real,
+sin ningún byte de entrada. `harness_gen/generate_race_test.py` genera
+y valida (IA + `go test -race` real) un test de estrés de concurrencia;
+`patch_directed_race_harness.py` conecta el descubrimiento.
+
+**Validación manual primero, antes de automatizar** (mismo criterio
+que el resto del proyecto): un stress test escrito a mano (2
+goroutines, `InitFactories`/`GetDefault` concurrentes) detectó la
+carrera real en la versión PRE-fix (commit padre de `8fe16c9967`) en
+0.027s, y salió limpio en la versión POST-fix -- confirma que la
+técnica funciona antes de construir el pipeline automático.
+
+**Dos bugs reales encontrados automatizando esto, ambos corregidos**:
+
+1. El commit real también toca `factory_test.go` en el mismo commit
+   que el fix (convención real, misma que ya se vio con `cJSON`) --
+   sin filtrar, se colaron 11 nombres (`TestMain`,
+   `TestBootBCCSPConcurrent` -- irónicamente el propio test de
+   regresión que el repo real escribió para esta carrera) en un solo
+   prompt, y el modelo no logró compilar nada coherente en 3 intentos.
+   Corregido filtrando por la convención REAL de Go (`^Test`, no una
+   heurística -- `go test` lo exige estructuralmente).
+
+2. **El más serio**: con el filtro de arriba, el modelo generó un test
+   que SÍ compiló y corrió limpio (paso la validación) -- pero con 3
+   oleadas SECUENCIALES de goroutines (`InitFactories`, después
+   `GetDefault`, después `initFactories`), con `wg.Wait()` entre cada
+   oleada. Verificado reproduciendo el patrón exacto contra una carrera
+   real conocida en un paquete Go mínimo: esa estructura **detectó la
+   carrera 0 de 20 veces** (`wg.Wait()` serializa completamente el
+   acceso, ninguna goroutine de una función sigue viva cuando arranca
+   la siguiente), mientras que la misma carrera con todas las
+   goroutines mezcladas en un solo lote la detectó **20 de 20**. Es
+   decir: "compila y corre limpio" NO significaba "el test es capaz de
+   encontrar la carrera" -- el mismo tipo de brecha que el caso
+   `Ready()` de Go o el de la función de test de C, pero más grave acá
+   porque el resultado "limpio" es indistinguible de un falso negativo
+   sin este chequeo. Corregido con dos capas: (a) regla explícita en el
+   prompt con la evidencia real (0/20 vs 20/20), y (b) un chequeo
+   DETERMINÍSTICO que cuenta llamadas a `.Wait()` en el código generado
+   -- más de una es la firma directa del antipatrón, se rechaza ANTES
+   de compilar (no confía solo en que el modelo obedezca el prompt).
+
+**Resultado real, post-fix, contra `hyperledger/fabric-lib-go`**: el
+pipeline automático generó y validó un test real en el primer intento
+(`initFactories, InitFactories, GetDefault`, estructura correcta de un
+solo lote) -- limpio, sin carrera, confirmando que el fix real
+(`atomic.Pointer`) es sólido en el HEAD actual. Ver
+`harness_gen/test_generate_race_test.py` (incluye el caso de regresión
+real de las oleadas secuenciales, probado contra ambas estructuras 20
+veces cada una).
+
 ## Lo que falta (honesto)
 
 - No hay heurística de "qué PATHS específicos tocó el push reciente"
