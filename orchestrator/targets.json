@@ -52,7 +52,7 @@
     "engine": "rust",
     "crate_dir": "/opt/fracture/build/rust_targets/rust-fil-proofs/fr32",
     "target": "write_unpadded",
-    "known_finding": false,
+    "known_finding": true,
     "state": {}
   },
   {
