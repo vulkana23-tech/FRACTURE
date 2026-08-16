@@ -303,13 +303,100 @@ honesta es ofrecerla como opción de seeding CONDICIONAL, activada para
 targets que el investigador ya sabe que parsean estructuras anidadas
 con lógica real detrás, no como default del scheduler.
 
-**Cautela honesta que sigue aplicando**: 6 corridas en 3 targets/
-variantes de 2 binarios reales, sin significancia estadística formal
-calculada (solo promedios de 5 repeticiones por condición) -- patrón
-fuerte y consistente en las 6, pero no una ley demostrada
-matemáticamente. La interpretación "superlineal" es la lectura más
-razonable de los números, no algo verificado con un modelo estadístico
-real.
+**Cautela honesta que aplicaba en ese momento**: 6 corridas, patrón
+fuerte y consistente -- ver experimento #7 abajo, el primero fuera de
+la familia JSON, que encuentra un límite real de la técnica.
+
+## Experimento real #7, primer target real de PROTOBUF (no JSON): A/B contra `fabric_config_newenvelope` (2026-08-16)
+
+Los experimentos #1-#6 fueron todos JSON. `fabric_config_newenvelope`
+(`NewEnvelope([]byte) (*cb.Envelope, error)`, `hyperledger/fabric-config`)
+es un candidato real del propio registro que parsea **protobuf**, no
+JSON -- deserializa un `cb.ConfigUpdate` real, cuyo campo
+`ConfigGroup.Groups` es un mapa RECURSIVO de sí mismo (`map[string]*ConfigGroup`)
+-- el árbol de configuración de canal real de Hyperledger Fabric, con
+anidamiento real de producción, no sintético.
+
+**Trabajo nuevo real, no una repetición**: el álgebra de operadores no
+se pudo reusar tal cual (opera sobre `dict`/`list` de Python vía el
+módulo `json`) -- se reimplementó en Go (`transpose`/`semantic_inverse`/
+`interleave` operando sobre `*cb.ConfigGroup`/`*cb.ConfigUpdate` reales,
+mismo criterio exacto que la versión Python) porque Go's fuzzing nativo
+usa su propio formato de corpus (`go test fuzz v1\n[]byte(%q)`, no
+archivos de bytes crudos) y la deserialización real necesita
+`proto.Unmarshal` real.
+
+**Dos problemas metodológicos reales encontrados armando esto, ambos
+corregidos antes de confiar en un resultado**:
+1. Go's fuzzer nativo mantiene una CACHÉ GLOBAL de corpus interesante
+   (`$GOCACHE/fuzz/<paquete>/<FuzzFunc>/`) que persiste ENTRE corridas
+   -- y el propio daemon de este proyecto ya venía fuzzeando este
+   mismo target real durante horas, contaminando cualquier comparación
+   sin limpiarla antes de cada corrida. Corregido limpiando esa caché
+   explícitamente antes de cada una de las 10 corridas.
+2. `go test -run=FuzzXxx -coverprofile=...` (sin `-fuzz`) por default
+   solo instrumenta el PAQUETE bajo test (`configtx`, 1752
+   statements) -- el trabajo real de deserialización pasa DENTRO de
+   `google.golang.org/protobuf` (una dependencia), invisible a esa
+   métrica por default. Los primeros intentos dieron el mismo
+   "1.4%" exacto en las 10 corridas -- resultado sospechosamente
+   idéntico que reveló el problema. Corregido con
+   `-coverpkg=./...,google.golang.org/protobuf/...` (16595 statements
+   reales en alcance).
+
+**Metodología final**: 4 seeds reales (árboles `ConfigGroup` de 2-4
+niveles, incluido un caso vacío real), 200 mutantes por grupo de
+tratamiento vía la expresión real
+`seq(loop(interleave,3), choice(transpose, semantic_inverse))`
+reimplementada en Go, `-fuzztime=500000x` (ejecuciones exactas, mismo
+criterio que `-runs` de libFuzzer), 5 repeticiones con distinta
+semilla de RNG, corpus del fuzzer promovido a `testdata/fuzz/` después
+de cada corrida antes de medir cobertura final.
+
+**Resultado real, promedio de 5 corridas, PRIMER resultado negativo y
+consistente de la serie**:
+
+| métrica | control (4 seeds crudos) | tratamiento (204 seeds) |
+|---|---|---|
+| cobertura real (`configtx` + `google.golang.org/protobuf`) | 10.10% | 9.83% (**-2.70%**, gana **0/5**) |
+
+Ninguna anomalía real (sin `--- FAIL` en ninguna de las 10 corridas,
+chequeado explícitamente).
+
+**Interpretación real, distinta a la de los experimentos JSON**: la
+mutación estructural PIERDE acá, de forma consistente. Hipótesis
+razonable (no verificada rigurosamente, pero mecánicamente coherente):
+mi implementación de `transpose`/`semantic_inverse`/`interleave`
+siempre pasa por `proto.Marshal` sobre un struct de Go válido -- por
+construcción, NUNCA puede producir bytes con formato wire inválido
+(varints truncados, tipos de wire incorrectos, longitudes que no
+calzan). El havoc de bytes puro de `go test -fuzz`, en cambio, muta
+los BYTES YA MARSHALEADOS directamente -- y en un formato binario denso
+como protobuf, la mayoría de esas mutaciones SÍ producen bytes con
+formato wire inválido, que ejercitan las rutas de manejo de errores
+REALES del unmarshaler (justamente el código que la instrumentación de
+cobertura ampliada ahora sí ve, dentro de la dependencia
+`google.golang.org/protobuf`). JSON es un
+formato de texto mucho más permisivo -- muchas mutaciones de bytes
+siguen siendo JSON sintácticamente válido (o casi), así que ese
+"espacio de bytes inválidos" es más chico y menos relevante ahí. Un
+mutador que SOLO opera en el árbol ya deserializado, como este, nunca
+explora ese espacio -- en un formato de texto permisivo eso no importa
+mucho (el havoc lo cubre igual, y la estructura aporta lo suyo); en un
+formato binario denso, ese espacio es una fracción real y grande de la
+cobertura alcanzable, y quedarse afuera de él cuesta más de lo que la
+diversidad estructural aporta.
+
+**Esto no invalida los experimentos #1-#6** -- son honestos y reales
+para JSON. Lo que aporta el experimento #7 es un límite real de la
+técnica: el beneficio depende del formato de serialización, no solo de
+la profundidad/anidamiento del contenido. Para formatos binarios
+densos, la mutación a nivel de bytes sigue siendo más valiosa que la
+mutación estructural pura -- la combinación ideal (no probada acá)
+sería probablemente MEZCLAR ambas: usar el mutador estructural para
+generar semillas de ALTO NIVEL, pero dejar que el motor de bytes
+(libFuzzer/`go test -fuzz`) siga mutando esas semillas a nivel de
+bytes también, en vez de tratarlas como fijas.
 
 ## Experimento real #1 (metodología con confounds, ver arriba): A/B contra `zabbix_zbxjson_open` (2026-08-16)
 
@@ -370,28 +457,36 @@ venv/bin/python3 -m pytest novel_fuzzing/ -v
 
 - No está conectado a ningún target del daemon 24/7 todavía -- sigue
   siendo un experimento standalone, no una feature integrada. Con el
-  experimento #6 (+22.52% en `ft`, +1.94% en `cov`, victoria unánime
-  5/5 en ambas), hay un caso real -- no solo incipiente -- para
-  ofrecerlo como opción de seeding condicional para targets que
-  combinan anidamiento estructural CON procesamiento real por campo
-  (candidatos reales del propio registro: `fabric_config_newenvelope`,
-  `fabric_gateway_parsetransactionenvelope` -- aunque esos parsean
-  protobuf, no JSON, ver limitación abajo). Sigue sin alcanzar para
-  integrarlo como default GENERAL del scheduler (`zbxjson`, sin
-  ninguna de las dos condiciones, sigue mostrando efecto nulo/negativo)
-  -- la señal apunta a una mejora CONDICIONAL, fuerte cuando aplica,
-  nula cuando no.
-- **Hallazgo real más importante de toda la serie**: el efecto de
-  anidamiento + procesamiento profundo JUNTOS (+22.52%) es
-  SUPERLINEAL, no la suma de anidamiento solo (+5.78%) más
-  procesamiento solo (+1.64%, ≈7.4% sumado ingenuamente). Aislar las
-  dos variables (experimento #6) fue justamente lo que reveló esto --
-  confirma que son dimensiones relacionadas, no independientes, con
-  una interacción real entre ellas. Sin significancia estadística
-  formal calculada (6 corridas, promedios de 5 repeticiones cada una).
-- Solo cubre documentos JSON -- probar esto contra
+  experimento #7 (protobuf real, -2.70%, pierde 0/5), la señal ya NO
+  es "ofrecerlo como opción general para targets con anidamiento" --
+  el límite real es el FORMATO de serialización, no solo el
+  anidamiento del contenido. Para JSON con anidamiento+procesamiento
+  real (experimento #6), hay un caso fuerte. Para protobuf
+  (experimento #7), pierde consistentemente -- no integrar esto para
   `fabric_config_newenvelope`/`fabric_gateway_parsetransactionenvelope`
-  (candidatos reales que combinan ambas condiciones) necesitaría
-  generalizar la notación (`transpose`, `semantic_inverse`) a mensajes
-  protobuf ya deserializados, no se intentó acá -- sería el paso
-  natural siguiente si se decide integrar esto de verdad.
+  tal como está.
+- **Hallazgo real más importante de toda la serie**: el efecto de
+  anidamiento + procesamiento profundo JUNTOS en JSON (+22.52%) es
+  SUPERLINEAL, no la suma de anidamiento solo (+5.78%) más
+  procesamiento solo (+1.64%, ≈7.4% sumado ingenuamente).
+- **Segundo hallazgo real, igual de importante**: el beneficio de la
+  mutación estructural depende del formato de serialización, no solo
+  del contenido. JSON es un formato de texto permisivo -- el havoc de
+  bytes puro ya cubre bien el "espacio de bytes casi-válidos", así que
+  la estructura aporta valor real encima. Protobuf es un formato
+  binario denso -- la mayoría de las mutaciones de bytes producen
+  wire-format INVÁLIDO, que ejercita rutas de error reales del
+  unmarshaler; un mutador que solo opera en el árbol ya deserializado
+  (como este) nunca visita ese espacio, y perderlo cuesta más de lo
+  que la diversidad estructural aporta.
+- Sin significancia estadística formal calculada en ninguno de los 7
+  experimentos (promedios de 5 repeticiones cada uno).
+- **Idea real para el futuro, no implementada**: la combinación más
+  prometedora sería estructural + bytes, no una u otra -- usar el
+  mutador estructural para generar semillas de alto nivel
+  estructuralmente diversas, pero dejar que el motor de bytes
+  (libFuzzer/`go test -fuzz`) las siga mutando a nivel de bytes
+  también (en vez de tratarlas como fijas). Esto debería capturar el
+  beneficio de ambos mundos -- diversidad estructural Y exploración de
+  wire-format inválido -- pero no se probó, es una hipótesis para una
+  ronda futura.
