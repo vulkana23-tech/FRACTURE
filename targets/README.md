@@ -198,11 +198,43 @@ límite sin autenticar.
   un método definido inline dentro del cuerpo de una clase template en
   un header -- el propio heurístico de contexto de `git show` no
   siempre baja hasta la firma del método en ese caso, es una
-  limitación de git mismo, no del regex. Una heurística más precisa
-  necesitaría parsear el AST real (tree-sitter o similar) en vez de
-  confiar en el contexto que `git show` ya infiere gratis -- no se
-  hizo en esta ronda, la señal actual (barata, 5/8 reales) sigue
-  siendo mejor que nada, con este límite documentado.
+  limitación de git mismo, no del regex.
+
+  **Cerrado (2026-08-16)**: `targets/ast_function_boundary.py` agrega
+  una SEGUNDA fuente de señal via tree-sitter real (C++, Go, Rust,
+  Java) -- para cada hunk, parsea el archivo POST-parche completo y
+  encuentra TODOS los nodos `function_definition`/`method_declaration`/
+  `function_item` ancestros que contienen la línea cambiada (no solo el
+  más específico), en vez de confiar solo en el contexto de una línea
+  que `git show` infiere. No reemplaza `_guess_functions_touched`
+  (sigue siendo la señal barata de primera línea), la complementa: solo
+  agrega firmas NUEVAS que la heurística de git no encontró.
+
+  **Segundo hallazgo real, encontrado validando esto en vivo contra el
+  archivo real (no la reproducción sintética)**: la primera versión
+  devolvía solo el nodo MÁS CHICO que contiene la línea -- y en
+  `workerd`, los macros `KJ_SWITCH_ONEOF`/`KJ_CASE_ONEOF` (forma
+  `NOMBRE(args) { ... }`, muy usados en ese repo) engañan a
+  tree-sitter-cpp sin preprocesar: los parsea como definiciones de
+  función ANIDADAS dentro del `operator()` real que las contiene. Con
+  "nodo más chico" solamente, el resultado real era
+  `KJ_CASE_ONEOF(native, Ref<NativeFunction>)` -- ruido de macro, sin
+  `jsg::` en el texto, así que el commit `644f2c1598` seguía sin
+  marcarse. Corregido devolviendo la cadena COMPLETA de ancestros
+  función-como, no solo el más específico -- inofensivo agregar el
+  ruido del macro de más, lo que importa es que la firma real de más
+  afuera (`Ret operator()(jsg::Lock& jsl, Args... args)`) también quede
+  incluida.
+
+  **Confirmado extremo a extremo contra el repo real** (no solo el
+  archivo aislado): `644f2c1598` ahora sí queda marcado
+  (`js_engine_lifecycle_bound: True`), con las 5 firmas reales
+  (`wd_test(`, `class Function<Ret(Args...)> {`, `Ret operator()(jsg::Lock&
+  jsl, Args... args)`, `KJ_SWITCH_ONEOF(impl)`,
+  `KJ_CASE_ONEOF(native, Ref<NativeFunction>)`) -- corrida real contra
+  `cloudflare/workerd` (400 días, 20 commits máx): 14/20 candidatos
+  quedan marcados. Ver `targets/test_ast_function_boundary.py`
+  (incluye el caso de regresión real del macro).
 - ~~`find_patch_directed_candidates.py` no está conectado todavía a
   `harness_gen/`~~ **cerrado (2026-08-15/16)**: `patch_directed_go_harness.py`
   (Go), `patch_directed_rust_harness.py` (Rust) y `patch_directed_jvm_harness.py`

@@ -26,6 +26,12 @@ import tempfile
 from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional
 
+from ast_function_boundary import (
+    changed_line_numbers_post_patch,
+    enclosing_function_signatures,
+    language_for_path,
+)
+
 _CLONE_TIMEOUT = 120
 _GIT_TIMEOUT = 30
 
@@ -134,6 +140,40 @@ def _changed_files(repo_dir: str, commit_hash: str) -> List[str]:
     return [f for f in result.stdout.splitlines() if f.strip()]
 
 
+_AST_FILE_TIMEOUT = 15
+
+
+def _ast_functions_touched(repo_dir: str, commit_hash: str, files_changed: List[str]) -> List[str]:
+    """Segunda fuente de señal via `targets/ast_function_boundary.py`
+    -- solo para los archivos cuyo lenguaje soporta tree-sitter (ver
+    `_EXT_TO_LANG` ahi). Best-effort: un archivo borrado en este
+    commit, binario, o que no parsea limpio simplemente no aporta
+    nada, nunca hace fallar el pipeline completo (misma filosofia que
+    `_guess_functions_touched`)."""
+    signatures: List[str] = []
+    for path in files_changed:
+        if language_for_path(path) is None:
+            continue
+        file_diff = subprocess.run(
+            ["git", "show", "--unified=0", commit_hash, "--", path],
+            cwd=repo_dir, capture_output=True, text=True, timeout=_AST_FILE_TIMEOUT,
+        )
+        if file_diff.returncode != 0:
+            continue
+        changed_lines = changed_line_numbers_post_patch(file_diff.stdout)
+        if not changed_lines:
+            continue
+        post_patch = subprocess.run(
+            ["git", "show", f"{commit_hash}:{path}"],
+            cwd=repo_dir, capture_output=True, timeout=_AST_FILE_TIMEOUT,
+        )
+        if post_patch.returncode != 0:
+            # borrado en este commit, o el path no existe del lado post -- se descarta.
+            continue
+        signatures.extend(enclosing_function_signatures(path, post_patch.stdout, changed_lines))
+    return signatures
+
+
 def _guess_functions_touched(diff_text: str) -> List[str]:
     """Nunca inventa un nombre -- si git no pudo inferir el contexto del
     hunk (contenido vacio despues del segundo '@@'), se descarta ese
@@ -185,6 +225,17 @@ def find_patch_directed_candidates(repo_url: str, since_days: int = 365, max_com
         for c in real_candidates:
             diff_text = _diff_for_commit(repo_dir, c["hash"])
             functions = _guess_functions_touched(diff_text)
+            # Segunda fuente de señal (AST real via tree-sitter, ver
+            # ast_function_boundary.py) -- solo agrega firmas NUEVAS,
+            # nunca descarta lo que la heuristica de git ya encontro.
+            # Cierra la limitacion documentada en targets/README.md:
+            # git a veces ancla el contexto del hunk a la clase/struct
+            # CONTENEDORA en vez del metodo real, cuando el metodo esta
+            # definido inline dentro del cuerpo de un tipo.
+            ast_functions = _ast_functions_touched(repo_dir, c["hash"], c["files_changed"])
+            for f in ast_functions:
+                if f not in functions:
+                    functions.append(f)
             candidates.append({
                 **c,
                 "functions_touched_guess": functions,
