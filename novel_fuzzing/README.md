@@ -172,30 +172,73 @@ repeticiones, `-runs=500000`, mismo formato de seeds).
 | `cov` | 230.6 | 231.2 (**+0.26%**, gana 3/5) |
 | `ft` | 1252.4 | 1258.6 (**+0.50%**, gana 4/5) |
 
-## Los 3 targets juntos -- la hipótesis de profundidad se sostiene, con cautela
+## Experimento real #5, segunda dimensión -- ANIDAMIENTO del input, no profundidad de procesamiento (2026-08-16)
 
-| target | profundidad real de parseo | Δ `cov` | Δ `ft` |
+Los experimentos #1-#4 variaron cuánto CÓDIGO procesa cada campo del
+JSON (profundidad de *procesamiento*). Esta es una dimensión distinta:
+qué tan anidada está la ESTRUCTURA del input en sí (profundidad de
+*anidamiento*) -- un array de objetos con 6 niveles de anidamiento
+adentro es un input "más profundo" aunque el harness solo lea 2 campos
+string de él, igual que los anteriores.
+
+**No hizo falta un harness nuevo**: `json_parse_string()` (parson) es
+un parser recursivo real -- parsea CUALQUIER nivel de anidamiento antes
+de que el harness llegue a mirar nada, así que anidar la estructura
+real ejercita más recursión real del parser (`parse_object`/
+`parse_array`/`parse_value` llamándose entre sí), sin importar qué
+haga el harness con el resultado. Mismo binario
+(`build/fpc_parson/fuzz_parson`) que el experimento #4 -- se reusó
+directo.
+
+**Seeds reales, 4 documentos** (mismo formato `{"key":..., "value":...}`
+que el harness necesita para su chequeo de tipo, con un campo extra
+`"meta"`/`"extra"`/`"cfg"`/`"chain"` anidado 4-6 niveles que el harness
+ignora pero el parser sí tiene que atravesar completo -- ej.
+`{"key":"z","value":"3","chain":{"n1":{"n2":{"n3":{"n4":{"n5":"bottom"}}}}}}`).
+Misma metodología rigurosa exacta (5 repeticiones, `-runs=500000`).
+
+**Resultado real, promedio de 5 corridas**:
+
+| métrica | control (4 seeds anidados crudos) | tratamiento (204 seeds) |
+|---|---|---|
+| `cov` | 231.2 | 231.4 (**+0.09%**, gana 2/5) |
+| `ft` | 1203.2 | 1272.8 (**+5.78%**, gana **5/5**) |
+
+**El efecto más grande y más consistente de los 5 experimentos** --
+`ft` sube casi 6%, y el tratamiento gana TODAS las repeticiones (a
+diferencia de cualquier otro experimento, donde siempre hubo al menos
+una semilla de RNG donde perdía). Verificado que no es un artefacto de
+crashes/leaks silenciados: se re-corrieron las 10 corridas buscando
+explícitamente `ERROR`/`SUMMARY`/`Sanitizer`/`crash`/`leak-` en la
+salida completa -- ninguna anomalía real, el efecto es puramente de
+cobertura/exploración.
+
+## Los 5 experimentos juntos -- dos dimensiones reales, ambas apuntan en la misma dirección
+
+| experimento | dimensión variada | Δ `cov` | Δ `ft` |
 |---|---|---|---|
-| `zabbix_zbxjson_open` | mínima (solo abre/valida el JSON, no camina el array) | -0.18% | -0.91% |
-| `fpc_parson_json_parse_string` | intermedia (camina el array, lee 2 strings por objeto, descarta) | +0.26% | +0.50% |
-| `fpc_unmarshal_values` | máxima (camina + decodifica base64 + inserta en `std::map`) | +0.11% | +1.64% |
+| `zabbix_zbxjson_open` | procesamiento mínimo, sin anidamiento | -0.18% | -0.91% |
+| `fpc_parson` (flat) | procesamiento intermedio, sin anidamiento | +0.26% | +0.50% |
+| `fpc_unmarshal_values` | procesamiento máximo (base64+map), sin anidamiento | +0.11% | +1.64% |
+| `fpc_parson` (anidado) | procesamiento intermedio, **anidamiento real 4-6 niveles** | +0.09% | **+5.78%** |
 
-El patrón es consistente con la hipótesis en los 3 casos: a más
-profundidad real de procesamiento por elemento del array, mayor la
-ventaja (chica, pero monótonamente creciente) de sembrar con
-documentos estructuralmente diversos. Esto es coherente con el
-mecanismo propuesto -- cuanto más CÓDIGO real hay detrás de cada campo
-del JSON, más margen real hay para que una semilla que ya varía esos
-campos (en vez de descubrirlos por mutación de bytes al azar) ahorre
-tiempo real de exploración.
+Dos hallazgos reales, no uno: (1) más CÓDIGO procesando cada campo
+ayuda un poco (patrón monótono ya documentado en los primeros 3), y
+(2) el ANIDAMIENTO estructural del input ayuda bastante más -- el
+efecto más grande de los 5 experimentos, y el único con victoria
+unánime en las 5 repeticiones. Consistente con el mecanismo propuesto,
+pero ahora con una segunda variable real: cuanta más ESTRUCTURA tiene
+el árbol JSON (no solo cuánto código lo procesa), más terreno real
+donde el havoc de bytes puro tarda en tropezar por azar con la
+combinación correcta, y donde transponer/invertir semánticamente
+valores YA anidados encuentra estados nuevos más rápido.
 
-**Cautela honesta que sigue aplicando**: son 3 targets, efectos chicos
-(entre -1% y +2%), sin significancia estadística formal (no se calculó
-un test de hipótesis real, solo promedios de 5 corridas) -- esto es
-una señal real y un patrón consistente, no una ley demostrada. Alcanza
-para decir "la hipótesis de profundidad no se refutó, y el patrón
-apunta en la dirección esperada en los 3 casos probados", no para decir
-"confirmado".
+**Cautela honesta que sigue aplicando**: son 5 corridas (4 targets/
+variantes distintas), efectos que van de -1% a +6%, sin significancia
+estadística formal calculada (solo promedios de 5 repeticiones por
+condición) -- señal real y patrón consistente en dos dimensiones
+independientes, no una ley demostrada. El anidamiento parece ser la
+dimensión que más importa de las dos probadas hasta ahora.
 
 ## Experimento real #1 (metodología con confounds, ver arriba): A/B contra `zabbix_zbxjson_open` (2026-08-16)
 
@@ -255,22 +298,27 @@ venv/bin/python3 -m pytest novel_fuzzing/ -v
 ## Lo que falta (honesto)
 
 - No está conectado a ningún target del daemon 24/7 todavía -- sigue
-  siendo un experimento standalone, no una feature integrada. Con 3
-  targets probados con el mismo rigor mostrando un patrón MONÓTONO con
-  la profundidad real de parseo (ver tabla arriba), hay un caso
-  incipiente para ofrecerlo como opción de seeding específica para
-  targets con procesamiento real profundo por elemento -- pero
-  efectos de ≤2% con 5 repeticiones no alcanzan para justificar
-  integrarlo como default general al scheduler todavía.
-- **Hipótesis real, con soporte de 3 targets, no una ley demostrada**:
-  el efecto depende de cuánto margen de exploración le queda al target
-  dentro de la ventana de ejecuciones -- a más código real detrás de
-  cada campo del JSON, más ventaja (chica) de sembrar con documentos
-  ya estructuralmente diversos. Sin significancia estadística formal
-  calculada (solo promedios de 5 corridas por target) -- el siguiente
-  paso real, si se sigue esto, sería un target con profundidad aún
-  mayor (varios niveles de anidamiento, no solo un array plano) para
-  ver si el efecto sigue creciendo o se estanca.
+  siendo un experimento standalone, no una feature integrada. Con el
+  experimento #5 (+5.78% en `ft`, victoria unánime 5/5), hay un caso
+  real -- no solo incipiente -- para ofrecerlo como opción de seeding
+  específica para targets que parsean JSON con anidamiento real
+  (candidatos reales del propio registro:
+  `fabric_config_newenvelope`, `fabric_gateway_parsetransactionenvelope`,
+  cualquier target futuro que parsee protobuf/JSON anidado). Sigue sin
+  alcanzar para integrarlo como default GENERAL del scheduler (el
+  experimento #1/#3 con `zbxjson` mostró efecto nulo/negativo para
+  targets sin anidamiento real) -- la señal apunta a una mejora
+  CONDICIONAL, no universal.
+- **Dos hipótesis reales, con soporte empírico de 5 corridas, no una
+  ley demostrada**: (1) más código procesando cada campo ayuda un poco
+  (patrón monótono, experimentos #1-#4); (2) más anidamiento
+  ESTRUCTURAL del input ayuda bastante más (experimento #5, el efecto
+  más grande y consistente de los cinco). Sin significancia
+  estadística formal calculada. Si se sigue esto, el siguiente paso
+  real sería aislar las dos variables (probar anidamiento profundo
+  SIN aumentar el procesamiento, y viceversa, en el mismo target) para
+  saber si son efectos independientes o el mismo fenómeno visto desde
+  dos ángulos.
 - Solo cubre documentos JSON -- la notación (`transpose`,
   `semantic_inverse`) podría generalizarse a otros formatos
   estructurados (protobuf, el AST de un lenguaje), no se intentó acá.
