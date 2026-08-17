@@ -74,7 +74,20 @@ def run_c_fuzzer(
             env=env,
             capture_output=True,
             text=True,
-            timeout=duration_seconds + 120,
+            # Bug real encontrado en produccion (2026-08-17): cbmpc_bits_convert
+            # timeoutea de forma consistente con el margen viejo de +120s.
+            # Reproducido en vivo: converter_t::set_error() (codigo real y sin
+            # modificar de cb-mpc, src/cbmpc/core/convert.cpp) loguea a stderr
+            # en CADA ejecucion que falla el parseo -- con la mayoria de los
+            # inputs random de fuzzing fallando el parseo y ~250k execs/seg,
+            # eso es un volumen real de I/O (los mismos ~14GB/worker que
+            # llenaron el disco, ver el fix de isolated_run_dir mas arriba)
+            # que con -jobs=9 -workers=9 en paralelo parece genera contencion
+            # de disco real y corre mas alla del +120s viejo. No se toca el
+            # codigo real de la libreria (es logging de aplicacion legitimo,
+            # solo incompatible con la tasa de ejecuciones de libFuzzer) --
+            # se le da mas margen real en vez.
+            timeout=duration_seconds + 300,
         )
 
         total_runs = 0

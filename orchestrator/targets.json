@@ -6,11 +6,11 @@
     "target": "verify_ecdsa",
     "known_finding": false,
     "state": {
-      "cycles_completed": 1,
-      "last_cycle_at": "2026-08-16T20:09:49.233130+00:00",
-      "plateau_streak": 0,
+      "cycles_completed": 2,
+      "last_cycle_at": "2026-08-17T04:50:52.034887+00:00",
+      "plateau_streak": 1,
       "last_cov": 616,
-      "lifetime_runs": 196269155,
+      "lifetime_runs": 395188940,
       "plateaued": false
     }
   },
@@ -21,11 +21,11 @@
     "target": "verify_ed25519",
     "known_finding": false,
     "state": {
-      "cycles_completed": 1,
-      "last_cycle_at": "2026-08-16T20:09:49.209098+00:00",
-      "plateau_streak": 0,
+      "cycles_completed": 2,
+      "last_cycle_at": "2026-08-17T04:50:52.020124+00:00",
+      "plateau_streak": 1,
       "last_cov": 568,
-      "lifetime_runs": 530032427,
+      "lifetime_runs": 1074401449,
       "plateaued": false
     }
   },
@@ -36,11 +36,11 @@
     "target": "point_from_bytes",
     "known_finding": false,
     "state": {
-      "cycles_completed": 1,
-      "last_cycle_at": "2026-08-16T20:49:52.010316+00:00",
-      "plateau_streak": 0,
+      "cycles_completed": 2,
+      "last_cycle_at": "2026-08-17T05:30:55.187265+00:00",
+      "plateau_streak": 1,
       "last_cov": 32,
-      "lifetime_runs": 9089331083,
+      "lifetime_runs": 18540860731,
       "plateaued": false
     }
   },
@@ -51,11 +51,11 @@
     "target": "scalar_from_bytes",
     "known_finding": false,
     "state": {
-      "cycles_completed": 1,
-      "last_cycle_at": "2026-08-16T20:49:52.061920+00:00",
-      "plateau_streak": 0,
+      "cycles_completed": 2,
+      "last_cycle_at": "2026-08-17T05:30:55.215784+00:00",
+      "plateau_streak": 1,
       "last_cov": 25,
-      "lifetime_runs": 13397023743,
+      "lifetime_runs": 27100563473,
       "plateaued": false
     }
   },
@@ -66,11 +66,11 @@
     "target": "groth16_proof_read",
     "known_finding": false,
     "state": {
-      "cycles_completed": 1,
-      "last_cycle_at": "2026-08-16T21:29:54.656853+00:00",
-      "plateau_streak": 0,
-      "last_cov": 557,
-      "lifetime_runs": 43483013,
+      "cycles_completed": 2,
+      "last_cycle_at": "2026-08-17T06:10:58.082119+00:00",
+      "plateau_streak": 1,
+      "last_cov": 556,
+      "lifetime_runs": 88700625,
       "plateaued": false
     }
   },
@@ -81,11 +81,11 @@
     "target": "poseidon_hash",
     "known_finding": false,
     "state": {
-      "cycles_completed": 1,
-      "last_cycle_at": "2026-08-16T21:29:54.447378+00:00",
-      "plateau_streak": 0,
+      "cycles_completed": 2,
+      "last_cycle_at": "2026-08-17T06:10:57.826317+00:00",
+      "plateau_streak": 1,
       "last_cov": 643,
-      "lifetime_runs": 678269173,
+      "lifetime_runs": 1328272286,
       "plateaued": false
     }
   },
@@ -105,11 +105,11 @@
     "target": "read_commitments",
     "known_finding": false,
     "state": {
-      "cycles_completed": 1,
-      "last_cycle_at": "2026-08-16T22:09:56.692951+00:00",
-      "plateau_streak": 0,
+      "cycles_completed": 2,
+      "last_cycle_at": "2026-08-17T06:50:59.695764+00:00",
+      "plateau_streak": 1,
       "last_cov": 333,
-      "lifetime_runs": 547450177,
+      "lifetime_runs": 1028450089,
       "plateaued": false
     }
   },
@@ -133,10 +133,10 @@
     "fuzz_func": "FuzzDecodeToken",
     "known_finding": false,
     "state": {
-      "cycles_completed": 1,
-      "last_cycle_at": "2026-08-16T22:10:12.904745+00:00",
-      "plateau_streak": 1,
-      "lifetime_runs": 99648723,
+      "cycles_completed": 2,
+      "last_cycle_at": "2026-08-17T06:51:25.658400+00:00",
+      "plateau_streak": 2,
+      "lifetime_runs": 192193198,
       "plateaued": false
     }
   },
@@ -149,10 +149,10 @@
     "fuzz_func": "FuzzNewStateEP",
     "known_finding": false,
     "state": {
-      "cycles_completed": 1,
-      "last_cycle_at": "2026-08-16T22:50:00.145458+00:00",
+      "cycles_completed": 2,
+      "last_cycle_at": "2026-08-17T07:31:04.162727+00:00",
       "plateau_streak": 0,
-      "lifetime_runs": 234398856,
+      "lifetime_runs": 471280117,
       "plateaued": false
     }
   },
@@ -165,10 +165,10 @@
     "fuzz_func": "FuzzNewEnvelope",
     "known_finding": false,
     "state": {
-      "cycles_completed": 1,
-      "last_cycle_at": "2026-08-16T22:50:19.427556+00:00",
+      "cycles_completed": 2,
+      "last_cycle_at": "2026-08-17T07:31:32.022860+00:00",
       "plateau_streak": 0,
-      "lifetime_runs": 103670883,
+      "lifetime_runs": 207733332,
       "plateaued": false
     }
   },
@@ -181,10 +181,10 @@
     "fuzz_func": "FuzzFromString",
     "known_finding": false,
     "state": {
-      "cycles_completed": 1,
-      "last_cycle_at": "2026-08-16T23:30:11.501109+00:00",
+      "cycles_completed": 2,
+      "last_cycle_at": "2026-08-17T08:11:09.772518+00:00",
       "plateau_streak": 0,
-      "lifetime_runs": 142816296,
+      "lifetime_runs": 283604560,
       "plateaued": false
     }
   },
@@ -197,10 +197,10 @@
     "fuzz_func": "FuzzParseTransactionEnvelope",
     "known_finding": false,
     "state": {
-      "cycles_completed": 1,
-      "last_cycle_at": "2026-08-16T23:30:24.502301+00:00",
+      "cycles_completed": 2,
+      "last_cycle_at": "2026-08-17T08:11:36.919337+00:00",
       "plateau_streak": 0,
-      "lifetime_runs": 125306254,
+      "lifetime_runs": 228975462,
       "plateaued": false
     }
   },
@@ -213,10 +213,10 @@
     "fuzz_func": "FuzzNewApplicationPolicy",
     "known_finding": false,
     "state": {
-      "cycles_completed": 1,
-      "last_cycle_at": "2026-08-17T00:10:22.525638+00:00",
+      "cycles_completed": 2,
+      "last_cycle_at": "2026-08-17T08:51:20.580442+00:00",
       "plateau_streak": 0,
-      "lifetime_runs": 56023110,
+      "lifetime_runs": 120356003,
       "plateaued": false
     }
   },
@@ -229,10 +229,10 @@
     "fuzz_func": "FuzzGetAttributesFromIdemix",
     "known_finding": false,
     "state": {
-      "cycles_completed": 1,
-      "last_cycle_at": "2026-08-17T00:10:27.908715+00:00",
+      "cycles_completed": 2,
+      "last_cycle_at": "2026-08-17T08:51:40.478121+00:00",
       "plateau_streak": 0,
-      "lifetime_runs": 222454133,
+      "lifetime_runs": 473803835,
       "plateaued": false
     },
     "generated_by": "harness_gen/generate_go_harness.py (qwen3-coder:30b, 2 intentos, ver harness_gen/README.md)"
@@ -246,11 +246,11 @@
     "known_finding": true,
     "priority": "high",
     "state": {
-      "cycles_completed": 1,
-      "last_cycle_at": "2026-08-17T02:10:25.377205+00:00",
-      "plateau_streak": 0,
+      "cycles_completed": 2,
+      "last_cycle_at": "2026-08-17T10:51:22.743833+00:00",
+      "plateau_streak": 1,
       "last_cov": 250,
-      "lifetime_runs": 532292429,
+      "lifetime_runs": 1048224482,
       "plateaued": false
     }
   },
@@ -263,11 +263,11 @@
     "known_finding": false,
     "priority": "high",
     "state": {
-      "cycles_completed": 1,
-      "last_cycle_at": "2026-08-17T02:10:29.837140+00:00",
-      "plateau_streak": 0,
+      "cycles_completed": 2,
+      "last_cycle_at": "2026-08-17T10:51:42.287080+00:00",
+      "plateau_streak": 1,
       "last_cov": 224,
-      "lifetime_runs": 6976742237,
+      "lifetime_runs": 14611695411,
       "plateaued": false
     }
   },
@@ -281,11 +281,11 @@
     "known_finding": true,
     "priority": "high",
     "state": {
-      "cycles_completed": 1,
-      "last_cycle_at": "2026-08-17T02:12:11.674578+00:00",
+      "cycles_completed": 2,
+      "last_cycle_at": "2026-08-17T10:53:22.212751+00:00",
       "lifetime_runs": 0,
-      "last_crash_at": "2026-08-17T02:12:11.674605+00:00",
-      "known_crash_count": 4,
+      "last_crash_at": "2026-08-17T10:53:22.212776+00:00",
+      "known_crash_count": 10,
       "plateaued": false
     }
   },
@@ -296,11 +296,11 @@
     "target": "read_many",
     "known_finding": false,
     "state": {
-      "cycles_completed": 1,
-      "last_cycle_at": "2026-08-17T02:50:32.703094+00:00",
-      "plateau_streak": 0,
-      "last_cov": 571,
-      "lifetime_runs": 142291496,
+      "cycles_completed": 2,
+      "last_cycle_at": "2026-08-17T11:31:45.383999+00:00",
+      "plateau_streak": 1,
+      "last_cov": 568,
+      "lifetime_runs": 284510606,
       "plateaued": false
     },
     "generated_by": "targets/patch_directed_rust_harness.py (qwen3-coder:30b, 1 intento, ver harness_gen/README.md)"
@@ -315,13 +315,13 @@
     "artifact_dir": "/opt/fracture/build/jvm_targets/fabric_chaincode_java/crashes",
     "known_finding": true,
     "state": {
-      "cycles_completed": 1,
-      "last_cycle_at": "2026-08-17T02:12:38.698886+00:00",
+      "cycles_completed": 2,
+      "last_cycle_at": "2026-08-17T10:53:49.959360+00:00",
       "plateau_streak": 0,
-      "last_cov": 713,
+      "last_cov": 715,
       "lifetime_runs": 0,
-      "last_crash_at": "2026-08-17T02:12:38.698947+00:00",
-      "known_crash_count": 9,
+      "last_crash_at": "2026-08-17T10:53:49.959447+00:00",
+      "known_crash_count": 27,
       "plateaued": false
     }
   },
@@ -335,11 +335,11 @@
     "artifact_dir": "/opt/fracture/build/jvm_targets/fabric_chaincode_java/crashes_frombuffer",
     "known_finding": false,
     "state": {
-      "cycles_completed": 1,
-      "last_cycle_at": "2026-08-17T02:12:58.603118+00:00",
+      "cycles_completed": 2,
+      "last_cycle_at": "2026-08-17T10:54:11.696264+00:00",
       "lifetime_runs": 0,
-      "last_crash_at": "2026-08-17T02:12:58.603169+00:00",
-      "known_crash_count": 1,
+      "last_crash_at": "2026-08-17T10:54:11.696827+00:00",
+      "known_crash_count": 2,
       "plateaued": false
     },
     "generated_by": "harness_gen/generate_jvm_harness.py (qwen3-coder:30b, 1 intento con reglas mejoradas)"
@@ -353,10 +353,10 @@
     "fuzz_func": "FuzzSub",
     "known_finding": false,
     "state": {
-      "cycles_completed": 1,
-      "last_cycle_at": "2026-08-17T02:53:05.692244+00:00",
-      "plateau_streak": 1,
-      "lifetime_runs": 72519414,
+      "cycles_completed": 2,
+      "last_cycle_at": "2026-08-17T11:34:17.788386+00:00",
+      "plateau_streak": 2,
+      "lifetime_runs": 144657682,
       "plateaued": false
     },
     "generated_by": "targets/patch_directed_go_harness.py (qwen3-coder:30b, 1 intento)"
@@ -370,10 +370,10 @@
     "fuzz_func": "FuzzAdd",
     "known_finding": false,
     "state": {
-      "cycles_completed": 1,
-      "last_cycle_at": "2026-08-17T03:30:37.796541+00:00",
+      "cycles_completed": 2,
+      "last_cycle_at": "2026-08-17T12:11:50.667251+00:00",
       "plateau_streak": 0,
-      "lifetime_runs": 130149235,
+      "lifetime_runs": 251858390,
       "plateaued": false
     },
     "generated_by": "harness_gen/generate_go_harness.py (qwen3-coder:30b, 3 intentos -- 2 fallos reales de 'package main' vs 'package chaincode')"
@@ -387,7 +387,7 @@
     "known_finding": false,
     "state": {
       "last_error": "TimeoutExpired: Command '['/opt/fracture/build/cbmpc_bits_convert/fuzz_bits_convert', '-artifact_prefix=/opt/fracture/build/cbmpc_bits_convert/crashes/', '-max_total_time=2400', '-jobs=9', '-workers=9', '/opt/fracture/build/cbmpc_bits_convert/corpus']' timed out after 2520 seconds",
-      "last_error_at": "2026-08-17T03:35:15.178945+00:00"
+      "last_error_at": "2026-08-17T12:16:28.016910+00:00"
     },
     "generated_by": "manual (find_patch_directed_candidates.py encontro el candidato real, harness escrito a mano)"
   },
@@ -404,7 +404,9 @@
       "plateau_streak": 0,
       "last_cov": 15,
       "lifetime_runs": 16099108992,
-      "plateaued": false
+      "plateaued": false,
+      "last_error": "RuntimeError: returncode=-15 sin crashes -- no fuzzeo de verdad, fallo antes de arrancar. stderr: cjson_setnumberhelper/corpus >fuzz-5.log 2>&1\n/opt/fracture/build/cjson_setnumberhelper/fuzz_setnumberhelper -artifact_prefix=/opt/fracture/build/cjson_setnumberhelper/crashes/ -max_total_time=2400 /opt/fracture/build/cjson_setnumberhelper/corpus >fuzz-6.log 2>&1\n/opt/fracture/build/cjson_setnumberhelper/fuzz_setnumberhelper -artifact_prefix=/opt/fracture/build/cjson_setnumberhelper/crashes/ -max_total_time=2400 /opt/fracture/build/cjson_setnumberhelper/corpus >fuzz-8.log 2>&1\npulse...\npulse...\n",
+      "last_error_at": "2026-08-17T12:41:16.369900+00:00"
     },
     "generated_by": "targets/patch_directed_c_harness.py (validacion end-to-end del pipeline C/C++ nuevo, primer intento real exitoso post-fix). NOTA HONESTA: cJSON NO aparece en el scope watched real de SPECTRE (verificado en vivo, 2026-08-16) -- este target no es bounty-accionable, se mantiene por exploracion continua y disclosure responsable upstream si aparece algo real, no por expectativa de recompensa."
   }
