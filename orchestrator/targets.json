@@ -5,7 +5,14 @@
     "crate_dir": "/opt/fracture/build/rust_targets/tofn",
     "target": "verify_ecdsa",
     "known_finding": false,
-    "state": {}
+    "state": {
+      "cycles_completed": 1,
+      "last_cycle_at": "2026-08-16T20:09:49.233130+00:00",
+      "plateau_streak": 0,
+      "last_cov": 616,
+      "lifetime_runs": 196269155,
+      "plateaued": false
+    }
   },
   {
     "id": "tofn_verify_ed25519",
@@ -13,7 +20,14 @@
     "crate_dir": "/opt/fracture/build/rust_targets/tofn",
     "target": "verify_ed25519",
     "known_finding": false,
-    "state": {}
+    "state": {
+      "cycles_completed": 1,
+      "last_cycle_at": "2026-08-16T20:09:49.209098+00:00",
+      "plateau_streak": 0,
+      "last_cov": 568,
+      "lifetime_runs": 530032427,
+      "plateaued": false
+    }
   },
   {
     "id": "wsts_point_from_bytes",
@@ -21,7 +35,14 @@
     "crate_dir": "/opt/fracture/build/rust_targets/sbtc/wsts",
     "target": "point_from_bytes",
     "known_finding": false,
-    "state": {}
+    "state": {
+      "cycles_completed": 1,
+      "last_cycle_at": "2026-08-16T20:49:52.010316+00:00",
+      "plateau_streak": 0,
+      "last_cov": 32,
+      "lifetime_runs": 9089331083,
+      "plateaued": false
+    }
   },
   {
     "id": "wsts_scalar_from_bytes",
@@ -29,7 +50,14 @@
     "crate_dir": "/opt/fracture/build/rust_targets/sbtc/wsts",
     "target": "scalar_from_bytes",
     "known_finding": false,
-    "state": {}
+    "state": {
+      "cycles_completed": 1,
+      "last_cycle_at": "2026-08-16T20:49:52.061920+00:00",
+      "plateau_streak": 0,
+      "last_cov": 25,
+      "lifetime_runs": 13397023743,
+      "plateaued": false
+    }
   },
   {
     "id": "bellperson_groth16_proof_read",
@@ -37,7 +65,14 @@
     "crate_dir": "/opt/fracture/build/rust_targets/bellperson",
     "target": "groth16_proof_read",
     "known_finding": false,
-    "state": {}
+    "state": {
+      "cycles_completed": 1,
+      "last_cycle_at": "2026-08-16T21:29:54.656853+00:00",
+      "plateau_streak": 0,
+      "last_cov": 557,
+      "lifetime_runs": 43483013,
+      "plateaued": false
+    }
   },
   {
     "id": "neptune_poseidon_hash",
@@ -45,7 +80,14 @@
     "crate_dir": "/opt/fracture/build/rust_targets/neptune",
     "target": "poseidon_hash",
     "known_finding": false,
-    "state": {}
+    "state": {
+      "cycles_completed": 1,
+      "last_cycle_at": "2026-08-16T21:29:54.447378+00:00",
+      "plateau_streak": 0,
+      "last_cov": 643,
+      "lifetime_runs": 678269173,
+      "plateaued": false
+    }
   },
   {
     "id": "rust_fil_proofs_fr32_write_unpadded",
@@ -62,7 +104,14 @@
     "crate_dir": "/opt/fracture/build/rust_targets/serai/crypto/dkg/pedpop",
     "target": "read_commitments",
     "known_finding": false,
-    "state": {}
+    "state": {
+      "cycles_completed": 1,
+      "last_cycle_at": "2026-08-16T22:09:56.692951+00:00",
+      "plateau_streak": 0,
+      "last_cov": 333,
+      "lifetime_runs": 547450177,
+      "plateaued": false
+    }
   },
   {
     "id": "fabric_amcl_dilithium_verify2",
@@ -83,7 +132,13 @@
     "fuzz_test_file": "/opt/fracture/orchestrator/fuzz_tests/fabric_ca_decodetoken_test.go",
     "fuzz_func": "FuzzDecodeToken",
     "known_finding": false,
-    "state": {}
+    "state": {
+      "cycles_completed": 1,
+      "last_cycle_at": "2026-08-16T22:10:12.904745+00:00",
+      "plateau_streak": 1,
+      "lifetime_runs": 99648723,
+      "plateaued": false
+    }
   },
   {
     "id": "fabric_chaincode_go_newstateep",
@@ -93,7 +148,13 @@
     "fuzz_test_file": "/opt/fracture/orchestrator/fuzz_tests/fabric_chaincode_go_newstateep_test.go",
     "fuzz_func": "FuzzNewStateEP",
     "known_finding": false,
-    "state": {}
+    "state": {
+      "cycles_completed": 1,
+      "last_cycle_at": "2026-08-16T22:50:00.145458+00:00",
+      "plateau_streak": 0,
+      "lifetime_runs": 234398856,
+      "plateaued": false
+    }
   },
   {
     "id": "fabric_config_newenvelope",
@@ -103,7 +164,13 @@
     "fuzz_test_file": "/opt/fracture/orchestrator/fuzz_tests/fabric_config_newenvelope_test.go",
     "fuzz_func": "FuzzNewEnvelope",
     "known_finding": false,
-    "state": {}
+    "state": {
+      "cycles_completed": 1,
+      "last_cycle_at": "2026-08-16T22:50:19.427556+00:00",
+      "plateau_streak": 0,
+      "lifetime_runs": 103670883,
+      "plateaued": false
+    }
   },
   {
     "id": "fabric_contract_api_go_fromstring",
@@ -113,7 +180,13 @@
     "fuzz_test_file": "/opt/fracture/orchestrator/fuzz_tests/fabric_contract_api_go_fromstring_test.go",
     "fuzz_func": "FuzzFromString",
     "known_finding": false,
-    "state": {}
+    "state": {
+      "cycles_completed": 1,
+      "last_cycle_at": "2026-08-16T23:30:11.501109+00:00",
+      "plateau_streak": 0,
+      "lifetime_runs": 142816296,
+      "plateaued": false
+    }
   },
   {
     "id": "fabric_gateway_parsetransactionenvelope",
@@ -123,7 +196,13 @@
     "fuzz_test_file": "/opt/fracture/orchestrator/fuzz_tests/fabric_gateway_parsetransactionenvelope_test.go",
     "fuzz_func": "FuzzParseTransactionEnvelope",
     "known_finding": false,
-    "state": {}
+    "state": {
+      "cycles_completed": 1,
+      "last_cycle_at": "2026-08-16T23:30:24.502301+00:00",
+      "plateau_streak": 0,
+      "lifetime_runs": 125306254,
+      "plateaued": false
+    }
   },
   {
     "id": "fabric_admin_sdk_newapplicationpolicy",
@@ -133,7 +212,13 @@
     "fuzz_test_file": "/opt/fracture/orchestrator/fuzz_tests/fabric_admin_sdk_signaturepolicy_test.go",
     "fuzz_func": "FuzzNewApplicationPolicy",
     "known_finding": false,
-    "state": {}
+    "state": {
+      "cycles_completed": 1,
+      "last_cycle_at": "2026-08-17T00:10:22.525638+00:00",
+      "plateau_streak": 0,
+      "lifetime_runs": 56023110,
+      "plateaued": false
+    }
   },
   {
     "id": "fabric_chaincode_go_attrmgr_idemix",
@@ -143,7 +228,13 @@
     "fuzz_test_file": "/opt/fracture/orchestrator/fuzz_tests/fabric_chaincode_go_attrmgr_idemix_test.go",
     "fuzz_func": "FuzzGetAttributesFromIdemix",
     "known_finding": false,
-    "state": {},
+    "state": {
+      "cycles_completed": 1,
+      "last_cycle_at": "2026-08-17T00:10:27.908715+00:00",
+      "plateau_streak": 0,
+      "lifetime_runs": 222454133,
+      "plateaued": false
+    },
     "generated_by": "harness_gen/generate_go_harness.py (qwen3-coder:30b, 2 intentos, ver harness_gen/README.md)"
   },
   {
@@ -154,7 +245,14 @@
     "artifact_dir": "/opt/fracture/build/fpc_parson/crashes",
     "known_finding": true,
     "priority": "high",
-    "state": {}
+    "state": {
+      "cycles_completed": 1,
+      "last_cycle_at": "2026-08-17T02:10:25.377205+00:00",
+      "plateau_streak": 0,
+      "last_cov": 250,
+      "lifetime_runs": 532292429,
+      "plateaued": false
+    }
   },
   {
     "id": "zabbix_zbxjson_open",
@@ -164,7 +262,14 @@
     "artifact_dir": "/opt/fracture/build/zabbix_zbxjson/crashes",
     "known_finding": false,
     "priority": "high",
-    "state": {}
+    "state": {
+      "cycles_completed": 1,
+      "last_cycle_at": "2026-08-17T02:10:29.837140+00:00",
+      "plateau_streak": 0,
+      "last_cov": 224,
+      "lifetime_runs": 6976742237,
+      "plateaued": false
+    }
   },
   {
     "id": "fpc_unmarshal_values",
@@ -175,7 +280,14 @@
     "extra_asan_options": "detect_leaks=0",
     "known_finding": true,
     "priority": "high",
-    "state": {}
+    "state": {
+      "cycles_completed": 1,
+      "last_cycle_at": "2026-08-17T02:12:11.674578+00:00",
+      "lifetime_runs": 0,
+      "last_crash_at": "2026-08-17T02:12:11.674605+00:00",
+      "known_crash_count": 4,
+      "plateaued": false
+    }
   },
   {
     "id": "bellperson_read_many",
@@ -183,7 +295,14 @@
     "crate_dir": "/opt/fracture/build/rust_targets/bellperson",
     "target": "read_many",
     "known_finding": false,
-    "state": {},
+    "state": {
+      "cycles_completed": 1,
+      "last_cycle_at": "2026-08-17T02:50:32.703094+00:00",
+      "plateau_streak": 0,
+      "last_cov": 571,
+      "lifetime_runs": 142291496,
+      "plateaued": false
+    },
     "generated_by": "targets/patch_directed_rust_harness.py (qwen3-coder:30b, 1 intento, ver harness_gen/README.md)"
   },
   {
@@ -195,7 +314,16 @@
     "corpus_dir": "/opt/fracture/build/jvm_targets/fabric_chaincode_java/corpus",
     "artifact_dir": "/opt/fracture/build/jvm_targets/fabric_chaincode_java/crashes",
     "known_finding": true,
-    "state": {}
+    "state": {
+      "cycles_completed": 1,
+      "last_cycle_at": "2026-08-17T02:12:38.698886+00:00",
+      "plateau_streak": 0,
+      "last_cov": 713,
+      "lifetime_runs": 0,
+      "last_crash_at": "2026-08-17T02:12:38.698947+00:00",
+      "known_crash_count": 9,
+      "plateaued": false
+    }
   },
   {
     "id": "fabric_chaincode_java_fromBuffer",
@@ -206,7 +334,14 @@
     "corpus_dir": "/opt/fracture/build/jvm_targets/fabric_chaincode_java/corpus_frombuffer",
     "artifact_dir": "/opt/fracture/build/jvm_targets/fabric_chaincode_java/crashes_frombuffer",
     "known_finding": false,
-    "state": {},
+    "state": {
+      "cycles_completed": 1,
+      "last_cycle_at": "2026-08-17T02:12:58.603118+00:00",
+      "lifetime_runs": 0,
+      "last_crash_at": "2026-08-17T02:12:58.603169+00:00",
+      "known_crash_count": 1,
+      "plateaued": false
+    },
     "generated_by": "harness_gen/generate_jvm_harness.py (qwen3-coder:30b, 1 intento con reglas mejoradas)"
   },
   {
@@ -217,7 +352,13 @@
     "fuzz_test_file": "/opt/fracture/orchestrator/fuzz_tests/fabric_samples_token_erc20_sub_test.go",
     "fuzz_func": "FuzzSub",
     "known_finding": false,
-    "state": {},
+    "state": {
+      "cycles_completed": 1,
+      "last_cycle_at": "2026-08-17T02:53:05.692244+00:00",
+      "plateau_streak": 1,
+      "lifetime_runs": 72519414,
+      "plateaued": false
+    },
     "generated_by": "targets/patch_directed_go_harness.py (qwen3-coder:30b, 1 intento)"
   },
   {
@@ -228,7 +369,13 @@
     "fuzz_test_file": "/opt/fracture/orchestrator/fuzz_tests/fabric_samples_token_erc20_add_test.go",
     "fuzz_func": "FuzzAdd",
     "known_finding": false,
-    "state": {},
+    "state": {
+      "cycles_completed": 1,
+      "last_cycle_at": "2026-08-17T03:30:37.796541+00:00",
+      "plateau_streak": 0,
+      "lifetime_runs": 130149235,
+      "plateaued": false
+    },
     "generated_by": "harness_gen/generate_go_harness.py (qwen3-coder:30b, 3 intentos -- 2 fallos reales de 'package main' vs 'package chaincode')"
   },
   {
@@ -238,7 +385,10 @@
     "corpus_dir": "/opt/fracture/build/cbmpc_bits_convert/corpus",
     "artifact_dir": "/opt/fracture/build/cbmpc_bits_convert/crashes",
     "known_finding": false,
-    "state": {},
+    "state": {
+      "last_error": "TimeoutExpired: Command '['/opt/fracture/build/cbmpc_bits_convert/fuzz_bits_convert', '-artifact_prefix=/opt/fracture/build/cbmpc_bits_convert/crashes/', '-max_total_time=2400', '-jobs=9', '-workers=9', '/opt/fracture/build/cbmpc_bits_convert/corpus']' timed out after 2520 seconds",
+      "last_error_at": "2026-08-17T03:35:15.178945+00:00"
+    },
     "generated_by": "manual (find_patch_directed_candidates.py encontro el candidato real, harness escrito a mano)"
   },
   {
@@ -248,7 +398,14 @@
     "corpus_dir": "/opt/fracture/build/cjson_setnumberhelper/corpus",
     "artifact_dir": "/opt/fracture/build/cjson_setnumberhelper/crashes",
     "known_finding": false,
-    "state": {},
+    "state": {
+      "cycles_completed": 1,
+      "last_cycle_at": "2026-08-17T04:10:39.402939+00:00",
+      "plateau_streak": 0,
+      "last_cov": 15,
+      "lifetime_runs": 16099108992,
+      "plateaued": false
+    },
     "generated_by": "targets/patch_directed_c_harness.py (validacion end-to-end del pipeline C/C++ nuevo, primer intento real exitoso post-fix). NOTA HONESTA: cJSON NO aparece en el scope watched real de SPECTRE (verificado en vivo, 2026-08-16) -- este target no es bounty-accionable, se mantiene por exploracion continua y disclosure responsable upstream si aparece algo real, no por expectativa de recompensa."
   }
 ]

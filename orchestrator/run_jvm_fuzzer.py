@@ -68,79 +68,84 @@ def run_jvm_fuzzer(
     isolated_run_dir = tempfile.mkdtemp(prefix=f"fracture_jvmfuzz_{target_class}_")
 
     print(f"Corriendo {target_class} por {duration_seconds}s ({workers} workers, cwd aislado {isolated_run_dir})...")
-    result = subprocess.run(
-        [
-            "jazzer",
-            f"--cp={classpath}",
-            f"--target_class={target_class}",
-            # Bug real encontrado en produccion (2026-08-16, primer
-            # smoke test real via el scheduler): las flags PROPIAS de
-            # Jazzer (--cp, --target_class) usan doble guion, pero las
-            # que pasan directo a libFuzzer por debajo (artifact_prefix,
-            # max_total_time, jobs, workers) usan UN solo guion -- con
-            # doble guion ac'a, Jazzer fallaba con "Unknown arguments"
-            # y la corrida nunca arrancaba de verdad. El bug quedo
-            # escondido en el primer smoke test porque ya habia un
-            # crash viejo (copiado a mano durante la investigacion) en
-            # artifact_dir, asi que "crashes=1" parecia una corrida
-            # real exitosa cuando en realidad nunca fuzzeo nada.
-            f"-artifact_prefix={artifact_prefix}",
-            f"-max_total_time={duration_seconds}",
-            f"-jobs={workers}",
-            f"-workers={workers}",
-            corpus_dir,
-        ],
-        cwd=isolated_run_dir,
-        capture_output=True,
-        text=True,
-        timeout=duration_seconds + 180,  # JVM tarda mas en levantar que un binario nativo -- margen extra real
-    )
+    try:
+        result = subprocess.run(
+            [
+                "jazzer",
+                f"--cp={classpath}",
+                f"--target_class={target_class}",
+                # Bug real encontrado en produccion (2026-08-16, primer
+                # smoke test real via el scheduler): las flags PROPIAS de
+                # Jazzer (--cp, --target_class) usan doble guion, pero las
+                # que pasan directo a libFuzzer por debajo (artifact_prefix,
+                # max_total_time, jobs, workers) usan UN solo guion -- con
+                # doble guion ac'a, Jazzer fallaba con "Unknown arguments"
+                # y la corrida nunca arrancaba de verdad. El bug quedo
+                # escondido en el primer smoke test porque ya habia un
+                # crash viejo (copiado a mano durante la investigacion) en
+                # artifact_dir, asi que "crashes=1" parecia una corrida
+                # real exitosa cuando en realidad nunca fuzzeo nada.
+                f"-artifact_prefix={artifact_prefix}",
+                f"-max_total_time={duration_seconds}",
+                f"-jobs={workers}",
+                f"-workers={workers}",
+                corpus_dir,
+            ],
+            cwd=isolated_run_dir,
+            capture_output=True,
+            text=True,
+            timeout=duration_seconds + 180,  # JVM tarda mas en levantar que un binario nativo -- margen extra real
+        )
 
-    total_runs = 0
-    per_worker_logs = sorted(glob.glob(os.path.join(isolated_run_dir, "fuzz-*.log")))
-    for log_path in per_worker_logs:
-        with open(log_path, "r", encoding="utf-8", errors="ignore") as fh:
-            content = fh.read()
-        matches = _DONE_RE.findall(content)
-        if matches:
-            total_runs += int(matches[-1])
-    if not per_worker_logs:
-        combined = result.stdout + result.stderr
-        matches = _DONE_RE.findall(combined)
-        if matches:
-            total_runs = int(matches[-1])
+        total_runs = 0
+        per_worker_logs = sorted(glob.glob(os.path.join(isolated_run_dir, "fuzz-*.log")))
+        for log_path in per_worker_logs:
+            with open(log_path, "r", encoding="utf-8", errors="ignore") as fh:
+                content = fh.read()
+            matches = _DONE_RE.findall(content)
+            if matches:
+                total_runs += int(matches[-1])
+        if not per_worker_logs:
+            combined = result.stdout + result.stderr
+            matches = _DONE_RE.findall(combined)
+            if matches:
+                total_runs = int(matches[-1])
 
-    crashes = []
-    for fname in sorted(os.listdir(artifact_dir)):
-        fpath = os.path.join(artifact_dir, fname)
-        if os.path.isfile(fpath) and fname.startswith("crash-"):
-            with open(fpath, "rb") as fh:
-                crashes.append({"file": fname, "bytes": fh.read()})
+        crashes = []
+        for fname in sorted(os.listdir(artifact_dir)):
+            fpath = os.path.join(artifact_dir, fname)
+            if os.path.isfile(fpath) and fname.startswith("crash-"):
+                with open(fpath, "rb") as fh:
+                    crashes.append({"file": fname, "bytes": fh.read()})
 
-    # Bug real encontrado en produccion (2026-08-16, primer smoke test
-    # correcto via el scheduler despues de arreglar el flag de arriba):
-    # Jazzer imprime una linea "INFO: Instrumented <Clase>" por CADA
-    # clase que instrumenta (cientos, a veces miles, segun el tamaño
-    # real del classpath) -- con el mismo recorte de 3000 caracteres
-    # que usan run_c_fuzzer.py/run_rust_fuzzer.py (donde el reporte de
-    # ASAN/panic es compacto y esto nunca fue un problema), ese ruido
-    # real enterro el "== Java Exception: ..." real en 1 de 2 corridas
-    # de prueba -- triage/ lo clasifico como "abort-sin-reporte" en vez
-    # de extraer la excepcion real. JVM necesita una ventana mucho mas
-    # grande que los demas engines, no es un problema de los otros.
-    outcome = {
-        "target_class": target_class,
-        "returncode": result.returncode,
-        "total_runs": total_runs,
-        "workers": workers,
-        "duration_seconds": duration_seconds,
-        "crashes": crashes,
-        "stderr_tail": result.stderr[-50000:],
-        "stdout_tail": result.stdout[-50000:],
-    }
-
-    shutil.rmtree(isolated_run_dir, ignore_errors=True)
-    return outcome
+        # Bug real encontrado en produccion (2026-08-16, primer smoke test
+        # correcto via el scheduler despues de arreglar el flag de arriba):
+        # Jazzer imprime una linea "INFO: Instrumented <Clase>" por CADA
+        # clase que instrumenta (cientos, a veces miles, segun el tamaño
+        # real del classpath) -- con el mismo recorte de 3000 caracteres
+        # que usan run_c_fuzzer.py/run_rust_fuzzer.py (donde el reporte de
+        # ASAN/panic es compacto y esto nunca fue un problema), ese ruido
+        # real enterro el "== Java Exception: ..." real en 1 de 2 corridas
+        # de prueba -- triage/ lo clasifico como "abort-sin-reporte" en vez
+        # de extraer la excepcion real. JVM necesita una ventana mucho mas
+        # grande que los demas engines, no es un problema de los otros.
+        outcome = {
+            "target_class": target_class,
+            "returncode": result.returncode,
+            "total_runs": total_runs,
+            "workers": workers,
+            "duration_seconds": duration_seconds,
+            "crashes": crashes,
+            "stderr_tail": result.stderr[-50000:],
+            "stdout_tail": result.stdout[-50000:],
+        }
+        return outcome
+    finally:
+        # Mismo bug real y mismo fix que run_c_fuzzer.py (2026-08-17):
+        # TimeoutExpired saltaba el rmtree de mas abajo y dejaba
+        # isolated_run_dir huerfano para siempre -- ver ese docstring
+        # para el incidente real que esto causo.
+        shutil.rmtree(isolated_run_dir, ignore_errors=True)
 
 
 def main():

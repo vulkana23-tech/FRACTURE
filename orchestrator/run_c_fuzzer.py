@@ -60,56 +60,66 @@ def run_c_fuzzer(
     env["ASAN_OPTIONS"] = asan_options
 
     print(f"Corriendo {binary} por {duration_seconds}s ({workers} workers, cwd aislado {isolated_run_dir})...")
-    result = subprocess.run(
-        [
-            os.path.abspath(binary),
-            f"-artifact_prefix={artifact_prefix}",
-            f"-max_total_time={duration_seconds}",
-            f"-jobs={workers}",
-            f"-workers={workers}",
-            corpus_dir,
-        ],
-        cwd=isolated_run_dir,
-        env=env,
-        capture_output=True,
-        text=True,
-        timeout=duration_seconds + 120,
-    )
+    try:
+        result = subprocess.run(
+            [
+                os.path.abspath(binary),
+                f"-artifact_prefix={artifact_prefix}",
+                f"-max_total_time={duration_seconds}",
+                f"-jobs={workers}",
+                f"-workers={workers}",
+                corpus_dir,
+            ],
+            cwd=isolated_run_dir,
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=duration_seconds + 120,
+        )
 
-    total_runs = 0
-    per_worker_logs = sorted(glob.glob(os.path.join(isolated_run_dir, "fuzz-*.log")))
-    for log_path in per_worker_logs:
-        with open(log_path, "r", encoding="utf-8", errors="ignore") as fh:
-            content = fh.read()
-        matches = _DONE_RE.findall(content)
-        if matches:
-            total_runs += int(matches[-1])
-    if not per_worker_logs:
-        combined = result.stdout + result.stderr
-        matches = _DONE_RE.findall(combined)
-        if matches:
-            total_runs = int(matches[-1])
+        total_runs = 0
+        per_worker_logs = sorted(glob.glob(os.path.join(isolated_run_dir, "fuzz-*.log")))
+        for log_path in per_worker_logs:
+            with open(log_path, "r", encoding="utf-8", errors="ignore") as fh:
+                content = fh.read()
+            matches = _DONE_RE.findall(content)
+            if matches:
+                total_runs += int(matches[-1])
+        if not per_worker_logs:
+            combined = result.stdout + result.stderr
+            matches = _DONE_RE.findall(combined)
+            if matches:
+                total_runs = int(matches[-1])
 
-    crashes = []
-    for fname in sorted(os.listdir(artifact_dir)):
-        fpath = os.path.join(artifact_dir, fname)
-        if os.path.isfile(fpath):
-            with open(fpath, "rb") as fh:
-                crashes.append({"file": fname, "bytes": fh.read()})
+        crashes = []
+        for fname in sorted(os.listdir(artifact_dir)):
+            fpath = os.path.join(artifact_dir, fname)
+            if os.path.isfile(fpath):
+                with open(fpath, "rb") as fh:
+                    crashes.append({"file": fname, "bytes": fh.read()})
 
-    outcome = {
-        "binary": binary,
-        "returncode": result.returncode,
-        "total_runs": total_runs,
-        "workers": workers,
-        "duration_seconds": duration_seconds,
-        "crashes": crashes,
-        "stderr_tail": result.stderr[-3000:],
-        "stdout_tail": result.stdout[-3000:],
-    }
-
-    shutil.rmtree(isolated_run_dir, ignore_errors=True)
-    return outcome
+        outcome = {
+            "binary": binary,
+            "returncode": result.returncode,
+            "total_runs": total_runs,
+            "workers": workers,
+            "duration_seconds": duration_seconds,
+            "crashes": crashes,
+            "stderr_tail": result.stderr[-3000:],
+            "stdout_tail": result.stdout[-3000:],
+        }
+        return outcome
+    finally:
+        # Bug real encontrado en produccion (2026-08-17): si subprocess.run
+        # revienta con TimeoutExpired (target que se cuelga mas alla de su
+        # presupuesto real), el rmtree de mas abajo nunca se ejecutaba --
+        # isolated_run_dir (con los fuzz-N.log de libFuzzer, que pueden
+        # crecer a varios GB por worker sin limite) quedaba huerfano para
+        # siempre. Esto lleno el disco entero del VPS (194GB en dos
+        # corridas huerfanas de cbmpc_bits_convert) y tumbo Redis/Celery
+        # de SPECTRE en el mismo host. finally garantiza la limpieza pase
+        # lo que pase, timeout incluido.
+        shutil.rmtree(isolated_run_dir, ignore_errors=True)
 
 
 def main():

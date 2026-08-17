@@ -127,41 +127,47 @@ def run_go_fuzzer(
 
     print(f"Corriendo `go test -fuzz={fuzz_func}` en {package_path}/ "
           f"por {duration_seconds}s (parallel={parallel})...")
-    result = subprocess.run(
-        [
-            "go", "test",
-            f"-fuzz={fuzz_func}",
-            f"-fuzztime={duration_seconds}s",
-            f"-parallel={parallel}",
-            "-run", "^$",  # nunca correr los tests normales, solo fuzzing
-        ],
-        cwd=target_dir,
-        capture_output=True,
-        text=True,
-        timeout=duration_seconds + 60,  # margen real por encima del fuzztime pedido
-    )
+    try:
+        result = subprocess.run(
+            [
+                "go", "test",
+                f"-fuzz={fuzz_func}",
+                f"-fuzztime={duration_seconds}s",
+                f"-parallel={parallel}",
+                "-run", "^$",  # nunca correr los tests normales, solo fuzzing
+            ],
+            cwd=target_dir,
+            capture_output=True,
+            text=True,
+            timeout=duration_seconds + 60,  # margen real por encima del fuzztime pedido
+        )
 
-    # Go guarda automaticamente cualquier input que crashea en
-    # testdata/fuzz/<fuzz_func>/ -- confirmar ahi en vez de parsear texto
-    # de stdout, que puede cambiar de formato entre versiones de Go.
-    corpus_dir = os.path.join(target_dir, "testdata", "fuzz", fuzz_func)
-    crashes = []
-    if os.path.isdir(corpus_dir):
-        for fname in os.listdir(corpus_dir):
-            with open(os.path.join(corpus_dir, fname), "r", encoding="utf-8", errors="ignore") as fh:
-                crashes.append({"file": fname, "content": fh.read()})
+        # Go guarda automaticamente cualquier input que crashea en
+        # testdata/fuzz/<fuzz_func>/ -- confirmar ahi en vez de parsear texto
+        # de stdout, que puede cambiar de formato entre versiones de Go.
+        corpus_dir = os.path.join(target_dir, "testdata", "fuzz", fuzz_func)
+        crashes = []
+        if os.path.isdir(corpus_dir):
+            for fname in os.listdir(corpus_dir):
+                with open(os.path.join(corpus_dir, fname), "r", encoding="utf-8", errors="ignore") as fh:
+                    crashes.append({"file": fname, "content": fh.read()})
 
-    outcome = {
-        "returncode": result.returncode,
-        "stdout_tail": result.stdout[-3000:],
-        "stderr_tail": result.stderr[-3000:],
-        "crashes": crashes,
-        "repo_url": repo_url,
-        "fuzz_func": fuzz_func,
-    }
-
-    shutil.rmtree(repo_dir, ignore_errors=True)
-    return outcome
+        outcome = {
+            "returncode": result.returncode,
+            "stdout_tail": result.stdout[-3000:],
+            "stderr_tail": result.stderr[-3000:],
+            "crashes": crashes,
+            "repo_url": repo_url,
+            "fuzz_func": fuzz_func,
+        }
+        return outcome
+    finally:
+        # Mismo bug real y mismo fix que run_c_fuzzer.py (2026-08-17):
+        # TimeoutExpired saltaba el rmtree de mas abajo y dejaba repo_dir
+        # (el clon entero) huerfano para siempre -- ver ese docstring
+        # para el incidente real que esto causo (disco lleno, Redis/
+        # Celery de SPECTRE caidos en el mismo host).
+        shutil.rmtree(repo_dir, ignore_errors=True)
 
 
 def main():

@@ -99,62 +99,67 @@ def run_rust_fuzzer(
         f"Corriendo {target} por {duration_seconds}s "
         f"({workers} workers, cwd aislado {isolated_run_dir})..."
     )
-    result = subprocess.run(
-        [
-            binary,
-            f"-artifact_prefix={artifact_prefix}",
-            f"-max_total_time={duration_seconds}",
-            f"-jobs={workers}",
-            f"-workers={workers}",
-            corpus_dir,
-        ],
-        cwd=isolated_run_dir,
-        env=env,
-        capture_output=True,
-        text=True,
-        timeout=duration_seconds + 120,
-    )
+    try:
+        result = subprocess.run(
+            [
+                binary,
+                f"-artifact_prefix={artifact_prefix}",
+                f"-max_total_time={duration_seconds}",
+                f"-jobs={workers}",
+                f"-workers={workers}",
+                corpus_dir,
+            ],
+            cwd=isolated_run_dir,
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=duration_seconds + 120,
+        )
 
-    # Sumar los fuzz-N.log reales de ESTA corrida (aislados, sin
-    # colision posible) en vez de confiar en el resumen que cargo-fuzz
-    # imprime a stdout -- ese es justo el que se corrompia.
-    total_runs = 0
-    per_worker_logs = sorted(glob.glob(os.path.join(isolated_run_dir, "fuzz-*.log")))
-    for log_path in per_worker_logs:
-        with open(log_path, "r", encoding="utf-8", errors="ignore") as fh:
-            content = fh.read()
-        matches = _DONE_RE.findall(content)
-        if matches:
-            total_runs += int(matches[-1])
+        # Sumar los fuzz-N.log reales de ESTA corrida (aislados, sin
+        # colision posible) en vez de confiar en el resumen que cargo-fuzz
+        # imprime a stdout -- ese es justo el que se corrompia.
+        total_runs = 0
+        per_worker_logs = sorted(glob.glob(os.path.join(isolated_run_dir, "fuzz-*.log")))
+        for log_path in per_worker_logs:
+            with open(log_path, "r", encoding="utf-8", errors="ignore") as fh:
+                content = fh.read()
+            matches = _DONE_RE.findall(content)
+            if matches:
+                total_runs += int(matches[-1])
 
-    # Si -jobs=1 (o el binario corre en foreground sin child workers),
-    # no hay fuzz-N.log -- el propio stdout/stderr del proceso trae la
-    # linea "Done N runs" directamente.
-    if not per_worker_logs:
-        combined = result.stdout + result.stderr
-        matches = _DONE_RE.findall(combined)
-        if matches:
-            total_runs = int(matches[-1])
+        # Si -jobs=1 (o el binario corre en foreground sin child workers),
+        # no hay fuzz-N.log -- el propio stdout/stderr del proceso trae la
+        # linea "Done N runs" directamente.
+        if not per_worker_logs:
+            combined = result.stdout + result.stderr
+            matches = _DONE_RE.findall(combined)
+            if matches:
+                total_runs = int(matches[-1])
 
-    crashes = []
-    for fname in sorted(os.listdir(artifact_prefix)):
-        fpath = os.path.join(artifact_prefix, fname)
-        if os.path.isfile(fpath):
-            with open(fpath, "rb") as fh:
-                crashes.append({"file": fname, "bytes": fh.read()})
+        crashes = []
+        for fname in sorted(os.listdir(artifact_prefix)):
+            fpath = os.path.join(artifact_prefix, fname)
+            if os.path.isfile(fpath):
+                with open(fpath, "rb") as fh:
+                    crashes.append({"file": fname, "bytes": fh.read()})
 
-    outcome = {
-        "target": target,
-        "returncode": result.returncode,
-        "total_runs": total_runs,
-        "workers": workers,
-        "duration_seconds": duration_seconds,
-        "crashes": crashes,
-        "stderr_tail": result.stderr[-3000:],
-    }
-
-    shutil.rmtree(isolated_run_dir, ignore_errors=True)
-    return outcome
+        outcome = {
+            "target": target,
+            "returncode": result.returncode,
+            "total_runs": total_runs,
+            "workers": workers,
+            "duration_seconds": duration_seconds,
+            "crashes": crashes,
+            "stderr_tail": result.stderr[-3000:],
+        }
+        return outcome
+    finally:
+        # Mismo bug real y mismo fix que run_c_fuzzer.py (2026-08-17):
+        # TimeoutExpired saltaba el rmtree de mas abajo y dejaba
+        # isolated_run_dir huerfano para siempre -- ver ese docstring
+        # para el incidente real que esto causo.
+        shutil.rmtree(isolated_run_dir, ignore_errors=True)
 
 
 def main():
