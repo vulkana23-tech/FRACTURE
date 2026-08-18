@@ -1,17 +1,39 @@
 [
   {
+    "id": "golang_crypto_ssh_parsepublickey",
+    "engine": "go",
+    "repo": "https://github.com/golang/crypto",
+    "package_path": "ssh",
+    "fuzz_test_file": "/opt/fracture/orchestrator/fuzz_tests/golang_crypto_ssh_parsepublickey_test.go",
+    "fuzz_func": "FuzzParsePublicKey",
+    "known_finding": false,
+    "priority": "high",
+    "state": {}
+  },
+  {
+    "id": "golang_net_dnsmessage_unpack",
+    "engine": "go",
+    "repo": "https://github.com/golang/net",
+    "package_path": "dns/dnsmessage",
+    "fuzz_test_file": "/opt/fracture/orchestrator/fuzz_tests/golang_net_dnsmessage_unpack_test.go",
+    "fuzz_func": "FuzzMessageUnpack",
+    "known_finding": false,
+    "priority": "high",
+    "state": {}
+  },
+  {
     "id": "tofn_verify_ecdsa",
     "engine": "rust",
     "crate_dir": "/opt/fracture/build/rust_targets/tofn",
     "target": "verify_ecdsa",
     "known_finding": false,
     "state": {
-      "cycles_completed": 2,
-      "last_cycle_at": "2026-08-17T04:50:52.034887+00:00",
-      "plateau_streak": 1,
+      "cycles_completed": 5,
+      "last_cycle_at": "2026-08-18T07:54:36.207704+00:00",
+      "plateau_streak": 4,
       "last_cov": 616,
-      "lifetime_runs": 395188940,
-      "plateaued": false
+      "lifetime_runs": 882101023,
+      "plateaued": true
     }
   },
   {
@@ -21,12 +43,12 @@
     "target": "verify_ed25519",
     "known_finding": false,
     "state": {
-      "cycles_completed": 2,
-      "last_cycle_at": "2026-08-17T04:50:52.020124+00:00",
-      "plateau_streak": 1,
+      "cycles_completed": 5,
+      "last_cycle_at": "2026-08-18T07:54:36.207175+00:00",
+      "plateau_streak": 4,
       "last_cov": 568,
-      "lifetime_runs": 1074401449,
-      "plateaued": false
+      "lifetime_runs": 2478670730,
+      "plateaued": true
     }
   },
   {
@@ -36,12 +58,12 @@
     "target": "point_from_bytes",
     "known_finding": false,
     "state": {
-      "cycles_completed": 2,
-      "last_cycle_at": "2026-08-17T05:30:55.187265+00:00",
-      "plateau_streak": 1,
+      "cycles_completed": 5,
+      "last_cycle_at": "2026-08-18T08:34:39.486836+00:00",
+      "plateau_streak": 4,
       "last_cov": 32,
-      "lifetime_runs": 18540860731,
-      "plateaued": false
+      "lifetime_runs": 40353207127,
+      "plateaued": true
     }
   },
   {
@@ -51,12 +73,12 @@
     "target": "scalar_from_bytes",
     "known_finding": false,
     "state": {
-      "cycles_completed": 2,
-      "last_cycle_at": "2026-08-17T05:30:55.215784+00:00",
-      "plateau_streak": 1,
+      "cycles_completed": 5,
+      "last_cycle_at": "2026-08-18T08:34:39.507799+00:00",
+      "plateau_streak": 4,
       "last_cov": 25,
-      "lifetime_runs": 27100563473,
-      "plateaued": false
+      "lifetime_runs": 59876854786,
+      "plateaued": true
     }
   },
   {
@@ -66,11 +88,11 @@
     "target": "groth16_proof_read",
     "known_finding": false,
     "state": {
-      "cycles_completed": 2,
-      "last_cycle_at": "2026-08-17T06:10:58.082119+00:00",
-      "plateau_streak": 1,
-      "last_cov": 556,
-      "lifetime_runs": 88700625,
+      "cycles_completed": 5,
+      "last_cycle_at": "2026-08-18T09:14:42.412174+00:00",
+      "plateau_streak": 0,
+      "last_cov": 559,
+      "lifetime_runs": 197211708,
       "plateaued": false
     }
   },
@@ -81,12 +103,12 @@
     "target": "poseidon_hash",
     "known_finding": false,
     "state": {
-      "cycles_completed": 2,
-      "last_cycle_at": "2026-08-17T06:10:57.826317+00:00",
-      "plateau_streak": 1,
+      "cycles_completed": 5,
+      "last_cycle_at": "2026-08-18T09:14:42.186023+00:00",
+      "plateau_streak": 4,
       "last_cov": 643,
-      "lifetime_runs": 1328272286,
-      "plateaued": false
+      "lifetime_runs": 3140046265,
+      "plateaued": true
     }
   },
   {
@@ -105,12 +127,12 @@
     "target": "read_commitments",
     "known_finding": false,
     "state": {
-      "cycles_completed": 2,
-      "last_cycle_at": "2026-08-17T06:50:59.695764+00:00",
-      "plateau_streak": 1,
+      "cycles_completed": 5,
+      "last_cycle_at": "2026-08-18T09:54:44.250888+00:00",
+      "plateau_streak": 4,
       "last_cov": 333,
-      "lifetime_runs": 1028450089,
-      "plateaued": false
+      "lifetime_runs": 2515293555,
+      "plateaued": true
     }
   },
   {
@@ -133,10 +155,10 @@
     "fuzz_func": "FuzzDecodeToken",
     "known_finding": false,
     "state": {
-      "cycles_completed": 2,
-      "last_cycle_at": "2026-08-17T06:51:25.658400+00:00",
+      "cycles_completed": 5,
+      "last_cycle_at": "2026-08-18T09:55:03.316950+00:00",
       "plateau_streak": 2,
-      "lifetime_runs": 192193198,
+      "lifetime_runs": 462189154,
       "plateaued": false
     }
   },
@@ -149,11 +171,13 @@
     "fuzz_func": "FuzzNewStateEP",
     "known_finding": false,
     "state": {
-      "cycles_completed": 2,
-      "last_cycle_at": "2026-08-17T07:31:04.162727+00:00",
-      "plateau_streak": 0,
-      "lifetime_runs": 471280117,
-      "plateaued": false
+      "cycles_completed": 4,
+      "last_cycle_at": "2026-08-18T10:34:50.560696+00:00",
+      "plateau_streak": 1,
+      "lifetime_runs": 842410246,
+      "plateaued": false,
+      "last_error": "RuntimeError: returncode=1 sin crashes -- no fuzzeo de verdad, fallo antes de arrancar. stderr: ",
+      "last_error_at": "2026-08-17T17:47:11.025052+00:00"
     }
   },
   {
@@ -165,10 +189,10 @@
     "fuzz_func": "FuzzNewEnvelope",
     "known_finding": false,
     "state": {
-      "cycles_completed": 2,
-      "last_cycle_at": "2026-08-17T07:31:32.022860+00:00",
+      "cycles_completed": 5,
+      "last_cycle_at": "2026-08-18T10:35:11.264523+00:00",
       "plateau_streak": 0,
-      "lifetime_runs": 207733332,
+      "lifetime_runs": 466169128,
       "plateaued": false
     }
   },
@@ -181,10 +205,10 @@
     "fuzz_func": "FuzzFromString",
     "known_finding": false,
     "state": {
-      "cycles_completed": 2,
-      "last_cycle_at": "2026-08-17T08:11:09.772518+00:00",
+      "cycles_completed": 5,
+      "last_cycle_at": "2026-08-18T11:14:57.083698+00:00",
       "plateau_streak": 0,
-      "lifetime_runs": 283604560,
+      "lifetime_runs": 635005369,
       "plateaued": false
     }
   },
@@ -197,10 +221,10 @@
     "fuzz_func": "FuzzParseTransactionEnvelope",
     "known_finding": false,
     "state": {
-      "cycles_completed": 2,
-      "last_cycle_at": "2026-08-17T08:11:36.919337+00:00",
+      "cycles_completed": 5,
+      "last_cycle_at": "2026-08-18T11:15:17.444147+00:00",
       "plateau_streak": 0,
-      "lifetime_runs": 228975462,
+      "lifetime_runs": 495784331,
       "plateaued": false
     }
   },
@@ -213,10 +237,10 @@
     "fuzz_func": "FuzzNewApplicationPolicy",
     "known_finding": false,
     "state": {
-      "cycles_completed": 2,
-      "last_cycle_at": "2026-08-17T08:51:20.580442+00:00",
+      "cycles_completed": 5,
+      "last_cycle_at": "2026-08-18T11:55:09.511860+00:00",
       "plateau_streak": 0,
-      "lifetime_runs": 120356003,
+      "lifetime_runs": 272024866,
       "plateaued": false
     }
   },
@@ -229,10 +253,10 @@
     "fuzz_func": "FuzzGetAttributesFromIdemix",
     "known_finding": false,
     "state": {
-      "cycles_completed": 2,
-      "last_cycle_at": "2026-08-17T08:51:40.478121+00:00",
+      "cycles_completed": 5,
+      "last_cycle_at": "2026-08-18T11:55:20.486601+00:00",
       "plateau_streak": 0,
-      "lifetime_runs": 473803835,
+      "lifetime_runs": 1076767875,
       "plateaued": false
     },
     "generated_by": "harness_gen/generate_go_harness.py (qwen3-coder:30b, 2 intentos, ver harness_gen/README.md)"
@@ -246,12 +270,12 @@
     "known_finding": true,
     "priority": "high",
     "state": {
-      "cycles_completed": 2,
-      "last_cycle_at": "2026-08-17T10:51:22.743833+00:00",
-      "plateau_streak": 1,
+      "cycles_completed": 5,
+      "last_cycle_at": "2026-08-18T13:55:12.858864+00:00",
+      "plateau_streak": 4,
       "last_cov": 250,
-      "lifetime_runs": 1048224482,
-      "plateaued": false
+      "lifetime_runs": 1947403863,
+      "plateaued": true
     }
   },
   {
@@ -263,12 +287,12 @@
     "known_finding": false,
     "priority": "high",
     "state": {
-      "cycles_completed": 2,
-      "last_cycle_at": "2026-08-17T10:51:42.287080+00:00",
-      "plateau_streak": 1,
+      "cycles_completed": 5,
+      "last_cycle_at": "2026-08-18T13:55:22.700610+00:00",
+      "plateau_streak": 4,
       "last_cov": 224,
-      "lifetime_runs": 14611695411,
-      "plateaued": false
+      "lifetime_runs": 31922529290,
+      "plateaued": true
     }
   },
   {
@@ -281,11 +305,11 @@
     "known_finding": true,
     "priority": "high",
     "state": {
-      "cycles_completed": 2,
-      "last_cycle_at": "2026-08-17T10:53:22.212751+00:00",
+      "cycles_completed": 5,
+      "last_cycle_at": "2026-08-18T13:59:03.465207+00:00",
       "lifetime_runs": 0,
-      "last_crash_at": "2026-08-17T10:53:22.212776+00:00",
-      "known_crash_count": 10,
+      "last_crash_at": "2026-08-18T13:59:03.465244+00:00",
+      "known_crash_count": 49,
       "plateaued": false
     }
   },
@@ -296,11 +320,11 @@
     "target": "read_many",
     "known_finding": false,
     "state": {
-      "cycles_completed": 2,
-      "last_cycle_at": "2026-08-17T11:31:45.383999+00:00",
-      "plateau_streak": 1,
-      "last_cov": 568,
-      "lifetime_runs": 284510606,
+      "cycles_completed": 5,
+      "last_cycle_at": "2026-08-18T14:35:26.398530+00:00",
+      "plateau_streak": 2,
+      "last_cov": 570,
+      "lifetime_runs": 619620914,
       "plateaued": false
     },
     "generated_by": "targets/patch_directed_rust_harness.py (qwen3-coder:30b, 1 intento, ver harness_gen/README.md)"
@@ -315,13 +339,13 @@
     "artifact_dir": "/opt/fracture/build/jvm_targets/fabric_chaincode_java/crashes",
     "known_finding": true,
     "state": {
-      "cycles_completed": 2,
-      "last_cycle_at": "2026-08-17T10:53:49.959360+00:00",
+      "cycles_completed": 5,
+      "last_cycle_at": "2026-08-18T13:59:45.376992+00:00",
       "plateau_streak": 0,
-      "last_cov": 715,
+      "last_cov": 732,
       "lifetime_runs": 0,
-      "last_crash_at": "2026-08-17T10:53:49.959447+00:00",
-      "known_crash_count": 27,
+      "last_crash_at": "2026-08-18T13:59:45.377057+00:00",
+      "known_crash_count": 135,
       "plateaued": false
     }
   },
@@ -335,11 +359,11 @@
     "artifact_dir": "/opt/fracture/build/jvm_targets/fabric_chaincode_java/crashes_frombuffer",
     "known_finding": false,
     "state": {
-      "cycles_completed": 2,
-      "last_cycle_at": "2026-08-17T10:54:11.696264+00:00",
+      "cycles_completed": 5,
+      "last_cycle_at": "2026-08-18T14:00:16.681005+00:00",
       "lifetime_runs": 0,
-      "last_crash_at": "2026-08-17T10:54:11.696827+00:00",
-      "known_crash_count": 2,
+      "last_crash_at": "2026-08-18T14:00:16.681056+00:00",
+      "known_crash_count": 5,
       "plateaued": false
     },
     "generated_by": "harness_gen/generate_jvm_harness.py (qwen3-coder:30b, 1 intento con reglas mejoradas)"
@@ -353,11 +377,11 @@
     "fuzz_func": "FuzzSub",
     "known_finding": false,
     "state": {
-      "cycles_completed": 2,
-      "last_cycle_at": "2026-08-17T11:34:17.788386+00:00",
-      "plateau_streak": 2,
-      "lifetime_runs": 144657682,
-      "plateaued": false
+      "cycles_completed": 4,
+      "last_cycle_at": "2026-08-18T14:40:26.499574+00:00",
+      "plateau_streak": 4,
+      "lifetime_runs": 262674006,
+      "plateaued": true
     },
     "generated_by": "targets/patch_directed_go_harness.py (qwen3-coder:30b, 1 intento)"
   },
@@ -370,10 +394,10 @@
     "fuzz_func": "FuzzAdd",
     "known_finding": false,
     "state": {
-      "cycles_completed": 2,
-      "last_cycle_at": "2026-08-17T12:11:50.667251+00:00",
+      "cycles_completed": 5,
+      "last_cycle_at": "2026-08-18T15:15:31.664728+00:00",
       "plateau_streak": 0,
-      "lifetime_runs": 251858390,
+      "lifetime_runs": 494030120,
       "plateaued": false
     },
     "generated_by": "harness_gen/generate_go_harness.py (qwen3-coder:30b, 3 intentos -- 2 fallos reales de 'package main' vs 'package chaincode')"
@@ -386,8 +410,8 @@
     "artifact_dir": "/opt/fracture/build/cbmpc_bits_convert/crashes",
     "known_finding": false,
     "state": {
-      "last_error": "TimeoutExpired: Command '['/opt/fracture/build/cbmpc_bits_convert/fuzz_bits_convert', '-artifact_prefix=/opt/fracture/build/cbmpc_bits_convert/crashes/', '-max_total_time=2400', '-jobs=9', '-workers=9', '/opt/fracture/build/cbmpc_bits_convert/corpus']' timed out after 2520 seconds",
-      "last_error_at": "2026-08-17T12:16:28.016910+00:00"
+      "last_error": "TimeoutExpired: Command '['/opt/fracture/build/cbmpc_bits_convert/fuzz_bits_convert', '-artifact_prefix=/opt/fracture/build/cbmpc_bits_convert/crashes/', '-max_total_time=2400', '-jobs=9', '-workers=9', '/opt/fracture/build/cbmpc_bits_convert/corpus']' timed out after 2700 seconds",
+      "last_error_at": "2026-08-18T15:25:52.706385+00:00"
     },
     "generated_by": "manual (find_patch_directed_candidates.py encontro el candidato real, harness escrito a mano)"
   },
@@ -399,12 +423,12 @@
     "artifact_dir": "/opt/fracture/build/cjson_setnumberhelper/crashes",
     "known_finding": false,
     "state": {
-      "cycles_completed": 1,
-      "last_cycle_at": "2026-08-17T04:10:39.402939+00:00",
-      "plateau_streak": 0,
+      "cycles_completed": 4,
+      "last_cycle_at": "2026-08-18T15:55:33.180505+00:00",
+      "plateau_streak": 3,
       "last_cov": 15,
-      "lifetime_runs": 16099108992,
-      "plateaued": false,
+      "lifetime_runs": 57257655145,
+      "plateaued": true,
       "last_error": "RuntimeError: returncode=-15 sin crashes -- no fuzzeo de verdad, fallo antes de arrancar. stderr: cjson_setnumberhelper/corpus >fuzz-5.log 2>&1\n/opt/fracture/build/cjson_setnumberhelper/fuzz_setnumberhelper -artifact_prefix=/opt/fracture/build/cjson_setnumberhelper/crashes/ -max_total_time=2400 /opt/fracture/build/cjson_setnumberhelper/corpus >fuzz-6.log 2>&1\n/opt/fracture/build/cjson_setnumberhelper/fuzz_setnumberhelper -artifact_prefix=/opt/fracture/build/cjson_setnumberhelper/crashes/ -max_total_time=2400 /opt/fracture/build/cjson_setnumberhelper/corpus >fuzz-8.log 2>&1\npulse...\npulse...\n",
       "last_error_at": "2026-08-17T12:41:16.369900+00:00"
     },
